@@ -55,7 +55,7 @@ services:
   #   networks:
   #     - cdp-tenant
 
-  cdp-node-backend-template:
+  farming-grants-agreements-pdf:
     build:
       context: .
       target: development
