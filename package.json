@@ -35,6 +35,8 @@
     "@hapi/hapi": "21.4.0",
     "aws-embedded-metrics": "4.2.0",
     "aws4": "1.13.2",
+    "client-sns": "github:aws-sdk/client-sns",
+    "client-sqs": "github:aws-sdk/client-sqs",
     "convict": "6.2.4",
     "convict-format-with-validator": "6.2.0",
     "global-agent": "3.0.0",
