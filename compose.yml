@@ -1,6 +1,7 @@
 services:
   localstack:
     image: localstack/localstack:3.0.2
+    container_name: localstack
     ports:
       - '4566:4566' # LocalStack Gateway
       - '4510-4559:4510-4559' # external services port range
@@ -60,7 +61,7 @@ services:
       context: .
       target: development
     ports:
-      - '3001:3001'
+      - '3556:3556'
     links:
       - 'localstack:localstack'
     depends_on:
@@ -69,9 +70,15 @@ services:
     env_file:
       - 'compose/aws.env'
     environment:
-      PORT: 3001
+      PORT: 3556
       NODE_ENV: development
       LOCALSTACK_ENDPOINT: http://localstack:4566
+      SNS_ENDPOINT: http://localstack:4566
+      SQS_ENDPOINT: http://localstack:4566
+      QUEUE_URL: http://localstack:4566/000000000000/create_agreement_pdf
+      QUEUE_NAME: create_agreement_pdf
+      ENABLE_TEST_ENDPOINTS: true
+      JWT_ENABLED: ${JWT_ENABLED:-false}
     networks:
       - cdp-tenant
     volumes:
