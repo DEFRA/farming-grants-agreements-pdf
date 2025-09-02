@@ -46,6 +46,100 @@ const config = convict({
     default: 'local',
     env: 'ENVIRONMENT'
   },
+  aws: {
+    region: {
+      doc: 'AWS region',
+      format: String,
+      default: 'eu-west-2',
+      env: 'AWS_REGION'
+    },
+    accessKeyId: {
+      doc: 'AWS access key ID',
+      format: String,
+      default: 'test',
+      env: 'AWS_ACCESS_KEY_ID'
+    },
+    secretAccessKey: {
+      doc: 'AWS secret access key',
+      format: String,
+      default: 'test',
+      env: 'AWS_SECRET_ACCESS_KEY'
+    },
+    sns: {
+      endpoint: {
+        doc: 'AWS SNS endpoint',
+        format: String,
+        default: 'http://localhost:4566',
+        env: 'SNS_ENDPOINT'
+      },
+      maxAttempts: {
+        doc: 'AWS SNS max publish attempts before error',
+        format: Number,
+        default: 3,
+        env: 'SNS_MAX_ATTEMPTS'
+      },
+      eventSource: {
+        doc: 'AWS SNS Cloud event source for emitted events',
+        format: String,
+        default: 'urn:service:agreement',
+        env: 'SNS_EVENT_SOURCE'
+      },
+      topic: {
+        offerAccepted: {
+          arn: {
+            doc: 'AWS SNS Topic ARN for Offer Accepted events',
+            format: String,
+            default: 'arn:aws:sns:eu-west-2:000000000000:agreement_accepted',
+            env: 'SNS_TOPIC_ARN_OFFER_ACCEPTED'
+          },
+          type: {
+            doc: 'AWS SNS Topic type for Offer Accepted events',
+            format: String,
+            default: 'io.onsite.agreement.offer.accepted',
+            env: 'SNS_TOPIC_TYPE_OFFER_ACCEPTED'
+          }
+        }
+      }
+    },
+    sqs: {
+      endpoint: {
+        doc: 'AWS SQS endpoint',
+        format: String,
+        default: 'http://localhost:4566',
+        env: 'SQS_ENDPOINT'
+      },
+      queueUrl: {
+        doc: 'Queue URL',
+        format: String,
+        default: 'http://localhost:4566/000000000000/create_agreement_pdf',
+        env: 'QUEUE_URL'
+      },
+      interval: {
+        doc: 'SQS Interval',
+        format: Number,
+        default: 10000,
+        env: 'SQS_INTERVAL'
+      },
+      maxMessages: {
+        doc: 'Max number of messages to receive from SQS',
+        format: Number,
+        default: 1,
+        env: 'MAX_NUMBER_OF_MESSAGES'
+      },
+      visibilityTimeout: {
+        doc: 'Visibility timeout for SQS messages',
+        format: Number,
+        default: 10,
+        env: 'VISIBILITY_TIMEOUT'
+      },
+      waitTime: {
+        doc: 'Wait time for SQS messages',
+        format: Number,
+        default: 5,
+        env: 'WAIT_TIME_SECONDS'
+      }
+    }
+  },
   log: {
     isEnabled: {
       doc: 'Is logging enabled',

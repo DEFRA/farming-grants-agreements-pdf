@@ -7,31 +7,27 @@ describe('#startServer', () => {
   let createServerImport
 
   beforeAll(async () => {
-    vi.stubEnv('PORT', '3098')
+    process.env.PORT = '3098'
 
     createServerImport = await import('../../server.js')
     startServerImport = await import('./start-server.js')
 
-    createServerSpy = vi.spyOn(createServerImport, 'createServer')
-    hapiServerSpy = vi.spyOn(hapi, 'server')
+    createServerSpy = jest.spyOn(createServerImport, 'createServer')
+    hapiServerSpy = jest.spyOn(hapi, 'server')
   })
 
   afterAll(() => {
-    vi.unstubAllEnvs()
+    delete process.env.PORT
   })
 
   describe('When server starts', () => {
-    let server
-
-    afterAll(async () => {
-      await server.stop({ timeout: 0 })
-    })
-
     test('Should start up server as expected', async () => {
-      server = await startServerImport.startServer()
+      const server = await startServerImport.startServer({ disableSQS: true })
 
       expect(createServerSpy).toHaveBeenCalled()
       expect(hapiServerSpy).toHaveBeenCalled()
+
+      await server.stop({ timeout: 0 })
     })
   })
 
@@ -39,9 +35,9 @@ describe('#startServer', () => {
     test('Should log failed startup message', async () => {
       createServerSpy.mockRejectedValue(new Error('Server failed to start'))
 
-      await expect(startServerImport.startServer()).rejects.toThrow(
-        'Server failed to start'
-      )
+      await expect(
+        startServerImport.startServer({ disableSQS: true })
+      ).rejects.toThrow('Server failed to start')
     })
   })
 })
