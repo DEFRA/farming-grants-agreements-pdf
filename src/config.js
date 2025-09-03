@@ -65,6 +65,20 @@ const config = convict({
       default: 'test',
       env: 'AWS_SECRET_ACCESS_KEY'
     },
+    s3: {
+      bucket: {
+        doc: 'S3 bucket name',
+        format: String,
+        default: '',
+        env: 'S3_BUCKET'
+      },
+      endpoint: {
+        doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Localstack.',
+        format: String,
+        default: '',
+        env: 'S3_ENDPOINT'
+      }
+    },
     sns: {
       endpoint: {
         doc: 'AWS SNS endpoint',
