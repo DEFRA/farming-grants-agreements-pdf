@@ -26,7 +26,8 @@ export async function publishAcceptOffer(agreementData, logger) {
         clientRef: agreementData?.clientRef,
         offerId: agreementData?.agreementNumber,
         frn: agreementData?.frn,
-        sbi: agreementData?.sbi
+        sbi: agreementData?.sbi,
+        htmlPage: agreementData?.htmlPage
       }
     },
     logger

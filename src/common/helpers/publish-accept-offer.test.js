@@ -17,7 +17,8 @@ describe('publishAcceptOffer', () => {
     correlationId: 'corr-456',
     clientRef: 'client-789',
     frn: 'frn-101',
-    sbi: 'sbi-202'
+    sbi: 'sbi-202',
+    htmlPage: '<html><body>Test Agreement</body></html>'
   }
 
   beforeEach(() => {
@@ -49,7 +50,8 @@ describe('publishAcceptOffer', () => {
           clientRef: 'client-789',
           offerId: 'AGR-123',
           frn: 'frn-101',
-          sbi: 'sbi-202'
+          sbi: 'sbi-202',
+          htmlPage: '<html><body>Test Agreement</body></html>'
         }
       },
       logger
@@ -95,7 +97,8 @@ describe('publishAcceptOffer', () => {
           clientRef: undefined,
           offerId: 'AGR-123',
           frn: undefined,
-          sbi: undefined
+          sbi: undefined,
+          htmlPage: undefined
         }
       },
       logger

@@ -14,7 +14,8 @@ describe('SQS message processor', () => {
       correlationId: 'test-correlation-id',
       clientRef: 'test-client-ref',
       frn: 'test-frn',
-      sbi: 'test-sbi'
+      sbi: 'test-sbi',
+      htmlPage: '<html><body>Test Agreement</body></html>'
     })
   })
 
@@ -27,7 +28,8 @@ describe('SQS message processor', () => {
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
-          sbi: 'test-sbi'
+          sbi: 'test-sbi',
+          htmlPage: '<html><body>Test Agreement</body></html>'
         }
       }
       const message = {
@@ -89,7 +91,8 @@ describe('SQS message processor', () => {
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
-          sbi: 'test-sbi'
+          sbi: 'test-sbi',
+          htmlPage: '<html><body>Test Agreement</body></html>'
         }
       }
 
@@ -112,7 +115,8 @@ describe('SQS message processor', () => {
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
-          sbi: 'test-sbi'
+          sbi: 'test-sbi',
+          htmlPage: '<html><body>Test Agreement</body></html>'
         }
       }
 
