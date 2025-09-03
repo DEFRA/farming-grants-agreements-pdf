@@ -8,8 +8,9 @@ import { failAction } from './common/helpers/fail-action.js'
 import { pulse } from './common/helpers/pulse.js'
 import { requestTracing } from './common/helpers/request-tracing.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
+import { sqsClientPlugin } from './common/helpers/sqs-client.js'
 
-async function createServer() {
+async function createServer(options = {}) {
   setupProxy()
   const server = Hapi.server({
     host: config.get('host'),
@@ -43,13 +44,14 @@ async function createServer() {
   // secureContext  - loads CA certificates from environment config
   // pulse          - provides shutdown handlers
   // router         - routes used in the app
-  await server.register([
-    requestLogger,
-    requestTracing,
-    secureContext,
-    pulse,
-    router
-  ])
+  // sqsClientPlugin - SQS consumer for processing offer.accepted messages (optional)
+  const plugins = [requestLogger, requestTracing, secureContext, pulse, router]
+
+  if (!options.disableSQS) {
+    plugins.push(sqsClientPlugin)
+  }
+
+  await server.register(plugins)
 
   return server
 }
