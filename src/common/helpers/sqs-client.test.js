@@ -1,7 +1,6 @@
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { Consumer } from 'sqs-consumer'
 import { sqsClientPlugin } from './sqs-client.js'
-import { publishAcceptOffer } from './publish-accept-offer.js'
 
 // Mock AWS SDK credential provider
 jest.mock('@aws-sdk/credential-provider-node', () => ({
@@ -12,19 +11,24 @@ jest.mock('@aws-sdk/credential-provider-node', () => ({
     })
 }))
 
-jest.mock('./publish-accept-offer.js')
 jest.mock('@aws-sdk/client-sqs')
 jest.mock('sqs-consumer')
 jest.mock('../../config.js', () => ({
   config: {
     get: jest.fn((key) => {
       switch (key) {
-        case 'sqs.maxMessages':
+        case 'aws.sqs.maxMessages':
           return 10
-        case 'sqs.waitTime':
+        case 'aws.sqs.waitTime':
           return 5
-        case 'sqs.visibilityTimeout':
+        case 'aws.sqs.visibilityTimeout':
           return 30
+        case 'aws.region':
+          return 'eu-west-2'
+        case 'aws.sqs.endpoint':
+          return 'http://localhost:4566'
+        case 'aws.sqs.queueUrl':
+          return 'test-queue-url'
         case 'featureFlags.seedDb':
           return true
         default:
@@ -72,14 +76,6 @@ describe('SQS Client', () => {
       on: jest.fn()
     }
     Consumer.create = jest.fn().mockReturnValue(mockConsumer)
-
-    // Setup publishAcceptOffer mock to return a mock agreement
-    publishAcceptOffer.mockResolvedValue({
-      agreementNumber: 'SFI123456789',
-      notificationMessageId: 'test-message-id',
-      frn: '123456789',
-      sbi: '123456789'
-    })
   })
 
   afterEach(() => {

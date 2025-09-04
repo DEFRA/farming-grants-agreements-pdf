@@ -47,9 +47,9 @@ export const sqsClientPlugin = {
           }
         },
         sqs: sqsClient,
-        batchSize: config.get('sqs.maxMessages'),
-        waitTimeSeconds: config.get('sqs.waitTime'),
-        visibilityTimeout: config.get('sqs.visibilityTimeout'),
+        batchSize: config.get('aws.sqs.maxMessages'),
+        waitTimeSeconds: config.get('aws.sqs.waitTime'),
+        visibilityTimeout: config.get('aws.sqs.visibilityTimeout'),
         handleMessageTimeout: 30000, // 30 seconds timeout for message processing
         attributeNames: ['All'],
         messageAttributeNames: ['All']
@@ -85,8 +85,8 @@ export const sqsClientPlugin = {
   },
   options: {
     awsRegion: config.get('aws.region'),
-    sqsEndpoint: config.get('sqs.endpoint'),
-    queueUrl: config.get('sqs.queueUrl')
+    sqsEndpoint: config.get('aws.sqs.endpoint'),
+    queueUrl: config.get('aws.sqs.queueUrl')
   }
 }
 
