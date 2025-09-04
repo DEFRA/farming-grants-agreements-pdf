@@ -10,7 +10,7 @@ export AWS_SECRET_ACCESS_KEY=test
 echo "🚀 Initializing SNS + SQS in LocalStack..."
 
 # Define S3 bucket for generated PDFs
-declare S3_BUCKET="s3://farming-grants-agreements-pdf-bucket"
+declare S3_BUCKET="farming-grants-agreements-pdf-bucket"
 
 # Define associative arrays for topics and queues
 declare -A TOPICS=(
@@ -76,7 +76,7 @@ done
 
 # Optional extras
 
-awslocal --endpoint-url=http://localhost:4566 s3 mb ${S3_BUCKET}
+awslocal --endpoint-url=http://localhost:4566 s3 mb s3://${S3_BUCKET}
 echo "✅ Created S3 bucket: ${S3_BUCKET}"
 
 echo "✅ SNS and SQS setup complete."

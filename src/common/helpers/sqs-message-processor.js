@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 import { generatePdf } from '../../services/pdf-generator.js'
+import { uploadPdf } from '../../services/file-upload.js'
 
 /**
  * Handle an event from the SQS queue
@@ -29,6 +30,20 @@ export const handleEvent = async (notificationMessageId, payload, logger) => {
       try {
         pdfPath = await generatePdf(payload.data.htmlPage, filename, logger)
         logger.info({ pdfPath, filename }, 'PDF generated successfully')
+
+        // Upload PDF to S3
+        try {
+          const uploadResult = await uploadPdf(pdfPath, filename, logger)
+          logger.info(
+            { uploadResult, agreementNumber },
+            'PDF uploaded successfully to S3'
+          )
+        } catch (uploadError) {
+          logger.error(
+            { error: uploadError, agreementNumber, pdfPath },
+            'Failed to upload PDF to S3'
+          )
+        }
       } catch (pdfError) {
         logger.error(
           { error: pdfError, agreementNumber },
