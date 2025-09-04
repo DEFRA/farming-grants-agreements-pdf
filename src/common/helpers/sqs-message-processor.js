@@ -18,7 +18,7 @@ export const handleEvent = async (notificationMessageId, payload, logger) => {
     let pdfPath = ''
 
     // Generate PDF if htmlPage is present
-    if (payload.data && payload.data.htmlPage) {
+    if (payload?.data?.htmlPage) {
       const agreementNumber = payload.data.agreementNumber
       const filename = `agreement-${agreementNumber}.pdf`
 

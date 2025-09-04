@@ -60,8 +60,9 @@ export async function publishEvent(
       return
     } catch (error) {
       lastError = error
+      const serverSideErrorStatusCode = 500
       const isRetryable =
-        error?.$metadata?.httpStatusCode >= 500 ||
+        error?.$metadata?.httpStatusCode >= serverSideErrorStatusCode ||
         error?.name === 'ThrottlingException' ||
         error?.name === 'TimeoutError' ||
         error?.name === 'NetworkingError'
