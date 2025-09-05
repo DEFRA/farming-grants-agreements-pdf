@@ -5,6 +5,7 @@ convict.addFormats(convictFormatWithValidator)
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
+const localstackEndpoint = 'http://localhost:4566'
 
 const config = convict({
   serviceVersion: {
@@ -75,7 +76,7 @@ const config = convict({
       endpoint: {
         doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Localstack.',
         format: String,
-        default: 'http://localhost:4566',
+        default: localstackEndpoint,
         env: 'S3_ENDPOINT'
       }
     },
@@ -83,7 +84,7 @@ const config = convict({
       endpoint: {
         doc: 'AWS SNS endpoint',
         format: String,
-        default: 'http://localhost:4566',
+        default: localstackEndpoint,
         env: 'SNS_ENDPOINT'
       },
       maxAttempts: {
@@ -119,7 +120,7 @@ const config = convict({
       endpoint: {
         doc: 'AWS SQS endpoint',
         format: String,
-        default: 'http://localhost:4566',
+        default: localstackEndpoint,
         env: 'SQS_ENDPOINT'
       },
       queueUrl: {

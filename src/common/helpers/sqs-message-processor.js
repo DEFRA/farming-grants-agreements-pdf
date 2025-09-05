@@ -3,6 +3,76 @@ import { generatePdf } from '../../services/pdf-generator.js'
 import { uploadPdf } from '../../services/file-upload.js'
 
 /**
+ * Generate and upload PDF from HTML content
+ * @param {object} data - The payload data containing htmlPage and agreementNumber
+ * @param {import('@hapi/hapi').Server} logger - The logger instance
+ * @returns {Promise<string>} The path to the generated PDF
+ */
+const generateAndUploadPdf = async (data, logger) => {
+  const agreementNumber = data.agreementNumber
+  const filename = `agreement-${agreementNumber}.pdf`
+
+  logger.info({ agreementNumber, filename }, 'Generating PDF from HTML content')
+
+  let pdfPath = ''
+
+  try {
+    pdfPath = await generatePdf(data.htmlPage, filename, logger)
+    logger.info({ pdfPath, filename }, 'PDF generated successfully')
+  } catch (pdfError) {
+    logger.error({ error: pdfError, agreementNumber }, 'Failed to generate PDF')
+    return pdfPath
+  }
+
+  await uploadPdfToS3(pdfPath, filename, agreementNumber, logger)
+  return pdfPath
+}
+
+/**
+ * Upload PDF to S3
+ * @param {string} pdfPath - The path to the PDF file
+ * @param {string} filename - The filename for the PDF
+ * @param {string} agreementNumber - The agreement number
+ * @param {import('@hapi/hapi').Server} logger - The logger instance
+ * @returns {Promise<void>}
+ */
+const uploadPdfToS3 = async (pdfPath, filename, agreementNumber, logger) => {
+  try {
+    const uploadResult = await uploadPdf(pdfPath, filename, logger)
+    logger.info(
+      { uploadResult, agreementNumber },
+      'PDF uploaded successfully to S3'
+    )
+  } catch (uploadError) {
+    logger.error(
+      { error: uploadError, agreementNumber, pdfPath },
+      'Failed to upload PDF to S3'
+    )
+  }
+}
+
+/**
+ * Process an offer accepted event
+ * @param {string} notificationMessageId - The AWS notification message ID
+ * @param {object} payload - The message payload
+ * @param {import('@hapi/hapi').Server} logger - The logger instance
+ * @returns {Promise<string>} The path to the generated PDF
+ */
+const processOfferAcceptedEvent = async (
+  notificationMessageId,
+  payload,
+  logger
+) => {
+  logger.info(`Processing agreement offer from event: ${notificationMessageId}`)
+
+  if (!payload?.data?.htmlPage) {
+    return ''
+  }
+
+  return generateAndUploadPdf(payload.data, logger)
+}
+
+/**
  * Handle an event from the SQS queue
  * @param {string} notificationMessageId - The AWS notification message ID
  * @param {object} payload - The message payload
@@ -10,51 +80,42 @@ import { uploadPdf } from '../../services/file-upload.js'
  * @returns {Promise<String>}
  */
 export const handleEvent = async (notificationMessageId, payload, logger) => {
-  if (payload.type.indexOf('offer.accepted') !== -1) {
-    logger.info(
-      `Processing agreement offer from event: ${notificationMessageId}`
-    )
-
-    let pdfPath = ''
-
-    // Generate PDF if htmlPage is present
-    if (payload?.data?.htmlPage) {
-      const agreementNumber = payload.data.agreementNumber
-      const filename = `agreement-${agreementNumber}.pdf`
-
-      logger.info(
-        { agreementNumber, filename },
-        'Generating PDF from HTML content'
-      )
-
-      try {
-        pdfPath = await generatePdf(payload.data.htmlPage, filename, logger)
-        logger.info({ pdfPath, filename }, 'PDF generated successfully')
-
-        // Upload PDF to S3
-        try {
-          const uploadResult = await uploadPdf(pdfPath, filename, logger)
-          logger.info(
-            { uploadResult, agreementNumber },
-            'PDF uploaded successfully to S3'
-          )
-        } catch (uploadError) {
-          logger.error(
-            { error: uploadError, agreementNumber, pdfPath },
-            'Failed to upload PDF to S3'
-          )
-        }
-      } catch (pdfError) {
-        logger.error(
-          { error: pdfError, agreementNumber },
-          'Failed to generate PDF'
-        )
-      }
-    }
-    return pdfPath
+  if (payload.type.indexOf('offer.accepted') === -1) {
+    return Promise.reject(new Error('Unrecognized event type'))
   }
 
-  return Promise.reject(new Error('Unrecognized event type'))
+  return processOfferAcceptedEvent(notificationMessageId, payload, logger)
+}
+
+/**
+ * Handle message processing errors
+ * @param {Error} error - The error that occurred
+ * @param {object} message - The SQS message that caused the error
+ * @param {import('@hapi/hapi').Server} logger - The logger instance
+ * @throws {Error} Throws a Boom error
+ */
+const handleProcessingError = (error, message, logger) => {
+  logger.error('Error processing message:', {
+    message,
+    error: error.message,
+    stack: error.stack
+  })
+
+  if (error.name === 'SyntaxError') {
+    throw Boom.badData('Invalid message format', {
+      message,
+      error: error.message
+    })
+  }
+
+  throw Boom.boomify(error, {
+    statusCode: 500,
+    message: 'Error processing SQS message',
+    data: {
+      message,
+      originalError: error.message
+    }
+  })
 }
 
 /**
@@ -69,26 +130,6 @@ export const processMessage = async (message, logger) => {
     logger.info('Processing message body:', messageBody)
     await handleEvent(message.MessageId, messageBody, logger)
   } catch (error) {
-    logger.error('Error processing message:', {
-      message,
-      error: error.message,
-      stack: error.stack
-    })
-
-    if (error.name === 'SyntaxError') {
-      throw Boom.badData('Invalid message format', {
-        message,
-        error: error.message
-      })
-    }
-
-    throw Boom.boomify(error, {
-      statusCode: 500,
-      message: 'Error processing SQS message',
-      data: {
-        message,
-        originalError: error.message
-      }
-    })
+    handleProcessingError(error, message, logger)
   }
 }
