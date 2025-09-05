@@ -212,5 +212,58 @@ describe('SQS Client', () => {
         })
       )
     })
+
+    it('should log successful message processing', async () => {
+      // Mock processMessage to succeed
+      jest.doMock('./sqs-message-processor.js', () => ({
+        processMessage: jest.fn().mockResolvedValue()
+      }))
+
+      sqsClientPlugin.plugin.register(server, options)
+
+      // Get the message handler
+      const messageHandler = Consumer.create.mock.calls[0][0].handleMessage
+
+      // Call handler with valid message
+      const validMessage = {
+        Body: JSON.stringify({
+          type: 'offer.accepted',
+          data: { test: 'data' }
+        }),
+        MessageId: 'msg-12345'
+      }
+
+      await messageHandler(validMessage)
+
+      // Assert the specific logger call we want to test
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Successfully processed message: msg-12345'
+      )
+    })
+
+    it('should log when SQS consumer starts', () => {
+      sqsClientPlugin.plugin.register(server, options)
+
+      // Get the 'started' event handler
+      const startedHandler = mockConsumer.on.mock.calls.find(
+        (call) => call[0] === 'started'
+      )[1]
+
+      // Trigger the started event
+      startedHandler()
+
+      // Assert the specific logger call we want to test
+      expect(mockLogger.info).toHaveBeenCalledWith('SQS Consumer started')
+    })
+
+    it('should setup started event handler during registration', () => {
+      sqsClientPlugin.plugin.register(server, options)
+
+      // Check that the 'started' event handler was registered
+      expect(mockConsumer.on).toHaveBeenCalledWith(
+        'started',
+        expect.any(Function)
+      )
+    })
   })
 })
