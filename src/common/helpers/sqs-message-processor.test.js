@@ -1,15 +1,18 @@
 import { handleEvent, processMessage } from './sqs-message-processor.js'
 import { generatePdf } from '../../services/pdf-generator.js'
+import { uploadPdf } from '../../services/file-upload.js'
 
 jest.mock('../../services/pdf-generator.js')
+jest.mock('../../services/file-upload.js')
 
 describe('SQS message processor', () => {
   let mockLogger
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockLogger = { info: jest.fn(), error: jest.fn() }
+    mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn() }
     generatePdf.mockResolvedValue('/path/to/generated.pdf')
+    uploadPdf.mockResolvedValue({ success: true })
   })
 
   describe('processMessage', () => {
@@ -95,18 +98,24 @@ describe('SQS message processor', () => {
         mockLogger
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
-        {
-          agreementNumber: 'SFI123456789',
-          filename: 'agreement-SFI123456789.pdf'
-        },
-        'Generating PDF from HTML content'
+        expect.stringContaining(
+          'Generating Agreement SFI123456789 PDF from HTML content'
+        )
+      )
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Generating Agreement SFI123456789 PDF from HTML content <html><body>Test Agreement</body></html>'
+        )
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
-        {
-          pdfPath: '/path/to/generated.pdf',
-          filename: 'agreement-SFI123456789.pdf'
-        },
-        'PDF generated successfully'
+        expect.stringContaining(
+          'PDF agreement-SFI123456789.pdf generated successfully and save to /path/to/generated.pdf'
+        )
+      )
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Agreement SFI123456789 PDF uploaded successfully (true) to S3'
+        )
       )
     })
 
@@ -172,8 +181,9 @@ describe('SQS message processor', () => {
         mockLogger
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
-        { error: pdfError, agreementNumber: 'SFI123456789' },
-        'Failed to generate PDF'
+        expect.stringContaining(
+          'Failed to generate agreement SFI123456789 PDF. Error: Error: PDF generation failed'
+        )
       )
     })
 
