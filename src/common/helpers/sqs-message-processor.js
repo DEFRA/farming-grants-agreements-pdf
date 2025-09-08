@@ -12,15 +12,20 @@ const generateAndUploadPdf = async (data, logger) => {
   const agreementNumber = data.agreementNumber
   const filename = `agreement-${agreementNumber}.pdf`
 
-  logger.info({ agreementNumber, filename }, 'Generating PDF from HTML content')
+  logger.info(`Generating Agreement ${agreementNumber} PDF from HTML content`)
+  logger.debug(
+    `Generating Agreement ${agreementNumber} PDF from HTML content ${data.htmlPage}`
+  )
 
   let pdfPath = ''
 
   try {
     pdfPath = await generatePdf(data.htmlPage, filename, logger)
-    logger.info({ pdfPath, filename }, 'PDF generated successfully')
+    logger.info(`PDF ${filename} generated successfully and save to ${pdfPath}`)
   } catch (pdfError) {
-    logger.error({ error: pdfError, agreementNumber }, 'Failed to generate PDF')
+    logger.error(
+      `Failed to generate agreement ${agreementNumber} PDF. Error: ${pdfError}`
+    )
     return pdfPath
   }
 
@@ -40,13 +45,11 @@ const uploadPdfToS3 = async (pdfPath, filename, agreementNumber, logger) => {
   try {
     const uploadResult = await uploadPdf(pdfPath, filename, logger)
     logger.info(
-      { uploadResult, agreementNumber },
-      'PDF uploaded successfully to S3'
+      `Agreement ${agreementNumber} PDF uploaded successfully (${uploadResult.success}) to S3`
     )
   } catch (uploadError) {
     logger.error(
-      { error: uploadError, agreementNumber, pdfPath },
-      'Failed to upload PDF to S3'
+      `Failed to upload agreement ${agreementNumber} PDF from ${pdfPath} to S3. Error: ${uploadError}`
     )
   }
 }
