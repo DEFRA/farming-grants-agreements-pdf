@@ -6,19 +6,20 @@ import { config } from '../config.js'
 function createS3Client() {
   const clientConfig = {
     region: config.get('aws.region'),
+    endpoint: config.get('aws.s3.endpoint'),
     credentials: {
       accessKeyId: config.get('aws.accessKeyId'),
       secretAccessKey: config.get('aws.secretAccessKey')
-    }
+    },
+    forcePathStyle: true
   }
 
-  const endpoint = config.get('aws.s3.endpoint')
-  if (endpoint) {
-    clientConfig.endpoint = endpoint
-    clientConfig.forcePathStyle = true
-  }
-
-  return new S3Client(clientConfig)
+  return new S3Client(
+    process.env.NODE_ENV === 'development'
+      ? clientConfig
+      : // Production will automatically use the default credentials
+        {}
+  )
 }
 
 export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
