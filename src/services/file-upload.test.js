@@ -133,6 +133,9 @@ describe('File Upload Service', () => {
     })
 
     test('should create S3 client with correct configuration', async () => {
+      const originalNodeEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+
       const mockResult = { ETag: '"test-etag"' }
       mockS3Client.send.mockResolvedValue(mockResult)
 
@@ -147,6 +150,8 @@ describe('File Upload Service', () => {
         endpoint: 'http://localhost:4566',
         forcePathStyle: true
       })
+
+      process.env.NODE_ENV = originalNodeEnv
     })
 
     test('should create PutObjectCommand with correct parameters', async () => {
