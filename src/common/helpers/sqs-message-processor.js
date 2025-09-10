@@ -3,28 +3,30 @@ import { generatePdf } from '../../services/pdf-generator.js'
 import { uploadPdf } from '../../services/file-upload.js'
 
 /**
- * Generate and upload PDF from HTML content
- * @param {object} data - The payload data containing htmlPage and agreementNumber
+ * Generate and upload PDF from agreement URL
+ * @param {object} data - The payload data containing agreement data
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @returns {Promise<string>} The path to the generated PDF
  */
 const generateAndUploadPdf = async (data, logger) => {
   const agreementNumber = data.agreementNumber
-  const filename = `agreement-${agreementNumber}.pdf`
 
-  logger.info(`Generating Agreement ${agreementNumber} PDF from HTML content`)
-  logger.debug(
-    `Generating Agreement ${agreementNumber} PDF from HTML content ${data.htmlPage}`
+  // version is currently hardcoded until the version is passed from the API service
+  const version = 1
+  const filename = `${agreementNumber}-${version}.pdf`
+
+  logger.info(
+    `Generating Agreement ${agreementNumber}-${version} PDF from agreement URL ${data.agreementUrl}`
   )
 
   let pdfPath = ''
 
   try {
-    pdfPath = await generatePdf(data.htmlPage, filename, logger)
+    pdfPath = await generatePdf(data.agreementUrl, filename, logger)
     logger.info(`PDF ${filename} generated successfully and save to ${pdfPath}`)
   } catch (pdfError) {
     logger.error(
-      `Failed to generate agreement ${agreementNumber} PDF. Error: ${pdfError}`
+      `Failed to generate agreement ${agreementNumber}-${version} PDF. Error: ${pdfError}`
     )
     return pdfPath
   }
@@ -49,7 +51,7 @@ const uploadPdfToS3 = async (pdfPath, filename, agreementNumber, logger) => {
     )
   } catch (uploadError) {
     logger.error(
-      `Failed to upload agreement ${agreementNumber} PDF from ${pdfPath} to S3. Error: ${uploadError}`
+      `Failed to upload agreement ${agreementNumber} PDF ${pdfPath} to S3. Error: ${uploadError}`
     )
   }
 }
@@ -68,7 +70,7 @@ const processOfferAcceptedEvent = async (
 ) => {
   logger.info(`Processing agreement offer from event: ${notificationMessageId}`)
 
-  if (!payload?.data?.htmlPage) {
+  if (!payload?.data?.agreementUrl) {
     return ''
   }
 
