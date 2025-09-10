@@ -113,8 +113,7 @@ describe('File Upload Service', () => {
       ).rejects.toThrow('File not found')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        { error: 'File not found', filePath: testFilePath, key: testKey },
-        'Error uploading PDF to S3'
+        `Error uploading PDF ${testFilePath} to S3: File not found`
       )
     })
 
@@ -127,8 +126,7 @@ describe('File Upload Service', () => {
       ).rejects.toThrow('S3 upload failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        { error: 'S3 upload failed', filePath: testFilePath, key: testKey },
-        'Error uploading PDF to S3'
+        `Error uploading PDF ${testFilePath} to S3: S3 upload failed`
       )
     })
 
@@ -200,13 +198,11 @@ describe('File Upload Service', () => {
       expect(fs.unlink).toHaveBeenCalledWith(testPdfPath)
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        { filename: testFilename },
         `Starting PDF upload process for ${testFilename}`
       )
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        { pdfPath: testPdfPath },
-        'Local PDF file cleaned up after upload'
+        `Local PDF file ${testPdfPath} cleaned up after upload`
       )
     })
 
@@ -227,8 +223,7 @@ describe('File Upload Service', () => {
 
       expect(result.success).toBe(true)
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        { cleanupError, pdfPath: testPdfPath },
-        'Failed to cleanup local PDF file'
+        `Failed to cleanup local PDF file ${testPdfPath}: ${cleanupError.message}`
       )
     })
 
@@ -242,8 +237,7 @@ describe('File Upload Service', () => {
       ).rejects.toThrow('Upload failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        { error: 'Upload failed', filename: testFilename },
-        'Error in PDF generation and upload process'
+        `Error in PDF ${testFilename} generation and upload process: Upload failed`
       )
     })
 

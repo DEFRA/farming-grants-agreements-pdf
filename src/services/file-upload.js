@@ -64,17 +64,14 @@ export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
       location: `s3://${bucket}/${key}`
     }
   } catch (error) {
-    logger.error(
-      { error: error.message, filePath, key },
-      'Error uploading PDF to S3'
-    )
+    logger.error(`Error uploading PDF ${filePath} to S3: ${error.message}`)
     throw error
   }
 }
 
 export async function uploadPdf(pdfPath, filename, logger, s3Client = null) {
   try {
-    logger.info({ filename }, `Starting PDF upload process for ${filename}`)
+    logger.info(`Starting PDF upload process for ${filename}`)
 
     const key = `agreements/${path.basename(filename)}`
 
@@ -82,16 +79,17 @@ export async function uploadPdf(pdfPath, filename, logger, s3Client = null) {
 
     try {
       await fs.unlink(pdfPath)
-      logger.info({ pdfPath }, 'Local PDF file cleaned up after upload')
+      logger.info(`Local PDF file ${pdfPath} cleaned up after upload`)
     } catch (cleanupError) {
-      logger.warn({ cleanupError, pdfPath }, 'Failed to cleanup local PDF file')
+      logger.warn(
+        `Failed to cleanup local PDF file ${pdfPath}: ${cleanupError.message}`
+      )
     }
 
     return uploadResult
   } catch (error) {
     logger.error(
-      { error: error.message, filename },
-      'Error in PDF generation and upload process'
+      `Error in PDF ${filename} generation and upload process: ${error.message}`
     )
     throw error
   }
