@@ -10,10 +10,13 @@ import { uploadPdf } from '../../services/file-upload.js'
  */
 const generateAndUploadPdf = async (data, logger) => {
   const agreementNumber = data.agreementNumber
-  const filename = `${agreementNumber}-1.pdf`
+
+  // version is currently hardcoded until the version is passed from the API service
+  const version = 1
+  const filename = `${agreementNumber}-${version}.pdf`
 
   logger.info(
-    `Generating Agreement ${agreementNumber} PDF from agreement URL ${data.agreementUrl}`
+    `Generating Agreement ${agreementNumber}-${version} PDF from agreement URL ${data.agreementUrl}`
   )
 
   let pdfPath = ''
@@ -23,7 +26,7 @@ const generateAndUploadPdf = async (data, logger) => {
     logger.info(`PDF ${filename} generated successfully and save to ${pdfPath}`)
   } catch (pdfError) {
     logger.error(
-      `Failed to generate agreement ${agreementNumber} PDF. Error: ${pdfError}`
+      `Failed to generate agreement ${agreementNumber}-${version} PDF. Error: ${pdfError}`
     )
     return pdfPath
   }
@@ -48,7 +51,7 @@ const uploadPdfToS3 = async (pdfPath, filename, agreementNumber, logger) => {
     )
   } catch (uploadError) {
     logger.error(
-      `Failed to upload agreement ${agreementNumber} PDF from ${pdfPath} to S3. Error: ${uploadError}`
+      `Failed to upload agreement ${agreementNumber} PDF ${pdfPath} to S3. Error: ${uploadError}`
     )
   }
 }

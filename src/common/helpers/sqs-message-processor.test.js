@@ -99,7 +99,7 @@ describe('SQS message processor', () => {
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Generating Agreement SFI123456789 PDF from agreement URL https://example.com/agreement/SFI123456789'
+          'Generating Agreement SFI123456789-1 PDF from agreement URL https://example.com/agreement/SFI123456789'
         )
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -139,7 +139,7 @@ describe('SQS message processor', () => {
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Failed to generate agreement SFI123456789 PDF. Error: Error: PDF generation failed'
+          'Failed to generate agreement SFI123456789-1 PDF. Error: Error: PDF generation failed'
         )
       )
     })
