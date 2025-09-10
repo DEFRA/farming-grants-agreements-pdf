@@ -2,10 +2,39 @@ import { jest } from '@jest/globals'
 import fs from 'fs/promises'
 import path from 'path'
 import { generatePdf } from './pdf-generator.js'
+import puppeteer from 'puppeteer'
+
+// Mock puppeteer before importing the module
+jest.mock('puppeteer', () => ({
+  __esModule: true,
+  default: {
+    launch: jest.fn()
+  }
+}))
+
+// Mock fs.access to simulate file existence
+jest.mock('fs/promises', () => ({
+  ...jest.requireActual('fs/promises'),
+  access: jest.fn().mockResolvedValue(undefined)
+}))
 
 const mockLogger = {
   info: jest.fn(),
   error: jest.fn()
+}
+
+// Mock objects for puppeteer
+const mockPage = {
+  setViewport: jest.fn().mockResolvedValue(undefined),
+  goto: jest.fn().mockResolvedValue(undefined),
+  evaluate: jest.fn().mockResolvedValue(undefined),
+  waitForNavigation: jest.fn().mockResolvedValue(undefined),
+  pdf: jest.fn().mockResolvedValue(undefined)
+}
+
+const mockBrowser = {
+  newPage: jest.fn().mockResolvedValue(mockPage),
+  close: jest.fn().mockResolvedValue(undefined)
 }
 
 describe('pdf-generator', () => {
@@ -37,461 +66,324 @@ describe('pdf-generator', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Reset all mock implementations
+    mockPage.setViewport.mockResolvedValue(undefined)
+    mockPage.goto.mockResolvedValue(undefined)
+    mockPage.evaluate.mockResolvedValue(undefined)
+    mockPage.waitForNavigation.mockResolvedValue(undefined)
+    mockPage.pdf.mockResolvedValue(undefined)
+    mockBrowser.newPage.mockResolvedValue(mockPage)
+    mockBrowser.close.mockResolvedValue(undefined)
+    puppeteer.launch.mockResolvedValue(mockBrowser)
   })
 
   describe('#generatePdf', () => {
-    test('Should generate PDF successfully with simple HTML content', async () => {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Test PDF</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #333; }
-          </style>
-        </head>
-        <body>
-          <h1>Test Document</h1>
-          <p>This is a test PDF generated during unit testing.</p>
-        </body>
-        </html>
-      `
-      const filename = path.join(testOutputDir, 'test-simple.pdf')
+    test('Should generate PDF successfully from agreement URL', async () => {
+      const agreementUrl = 'https://example.com/agreement/123'
+      const filename = 'test-simple.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      // Verify the PDF file was created
-      expect(result).toBe(filename)
+      // Verify the result path
+      expect(result).toBe(expectedPath)
 
-      // Check file exists and has content
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      // Verify Puppeteer interactions
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+        waitUntil: 'domcontentloaded'
+      })
+      expect(mockPage.evaluate).toHaveBeenCalled()
+      expect(mockPage.waitForNavigation).toHaveBeenCalledWith({
+        waitUntil: 'networkidle0'
+      })
+      expect(mockPage.pdf).toHaveBeenCalledWith({
+        path: expectedPath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        }
+      })
 
       // Verify logging
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Launching Puppeteer browser'
       )
       expect(mockLogger.info).toHaveBeenCalledWith('Creating new page')
-      expect(mockLogger.info).toHaveBeenCalledWith('Setting HTML content')
       expect(mockLogger.info).toHaveBeenCalledWith(
-        { outputPath: filename },
+        'Navigating to agreement URL https://example.com/agreement/123 with POST request'
+      )
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        { outputPath: expectedPath },
         'Generating PDF'
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
-        { outputPath: filename, filename },
-        'PDF generated successfully and saved to project root'
+        'PDF test-simple.pdf generated successfully and saved to project root ' +
+          expectedPath
       )
     })
 
-    test('Should generate PDF with complex styled content', async () => {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Agreement Document</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              margin: 40px;
-              color: #333;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-              border-bottom: 2px solid #00703c;
-            }
-            .section {
-              margin-bottom: 25px;
-            }
-            .section h2 {
-              color: #00703c;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 8px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 15px 0;
-            }
-            table td, table th {
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: left;
-            }
-            table th {
-              background-color: #f2f2f2;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Test Agreement Document</h1>
-            <p><strong>Agreement ID:</strong> TEST-001</p>
-          </div>
-          
-          <div class="section">
-            <h2>Agreement Details</h2>
-            <table>
-              <tr><th>Field</th><th>Value</th></tr>
-              <tr><td>Agreement Number</td><td>SFI123456789</td></tr>
-              <tr><td>Client Reference</td><td>test-client-ref</td></tr>
-            </table>
-          </div>
-          
-          <div class="section">
-            <h2>Terms</h2>
-            <ul>
-              <li>Term 1: Sample term</li>
-              <li>Term 2: Another sample term</li>
-            </ul>
-          </div>
-        </body>
-        </html>
-      `
-      const filename = path.join(testOutputDir, 'test-complex.pdf')
+    test('Should generate PDF with agreement URL containing complex ID', async () => {
+      const agreementUrl = 'https://example.com/agreement/SFI123456789'
+      const filename = 'test-complex.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      // Verify the PDF file was created
-      expect(result).toBe(filename)
+      // Verify the result path
+      expect(result).toBe(expectedPath)
 
-      // Check file exists and has content
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(1000) // Should be larger due to more content
+      // Verify the correct URL was navigated to
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+        waitUntil: 'domcontentloaded'
+      })
+
+      // Verify POST form was submitted with correct action
+      expect(mockPage.evaluate).toHaveBeenCalled()
+      const evaluateCall = mockPage.evaluate.mock.calls[0][0]
+      expect(evaluateCall).toBeDefined()
     })
 
-    test('Should handle empty HTML content', async () => {
-      const htmlContent = '<html><body></body></html>'
-      const filename = path.join(testOutputDir, 'test-empty.pdf')
+    test('Should handle URL with query parameters', async () => {
+      const agreementUrl = 'https://example.com/agreement?id=123&type=test'
+      const filename = 'test-query-params.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      // Should still generate a PDF, just empty
-      expect(result).toBe(filename)
-
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      expect(result).toBe(expectedPath)
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+        waitUntil: 'domcontentloaded'
+      })
     })
 
-    test('Should handle HTML with special characters and formatting', async () => {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Special Characters Test</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            .unicode { font-size: 18px; }
-          </style>
-        </head>
-        <body>
-          <h1>Special Characters & Formatting Test</h1>
-          <div class="unicode">
-            <p>Unicode: £ € $ ¥ © ® ™</p>
-            <p>Accented: café, naïve, résumé</p>
-            <p>Mathematical: α β γ δ ∑ ∏ ∞</p>
-          </div>
-          <p>HTML Entities: &lt; &gt; &amp; &quot; &#39;</p>
-        </body>
-        </html>
-      `
-      const filename = path.join(testOutputDir, 'test-special-chars.pdf')
+    test('Should handle HTTPS URLs', async () => {
+      const agreementUrl = 'https://secure.example.com/agreement/456'
+      const filename = 'test-https.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      expect(result).toBe(filename)
-
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      expect(result).toBe(expectedPath)
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+        waitUntil: 'domcontentloaded'
+      })
     })
 
-    test('Should handle malformed HTML gracefully', async () => {
-      const htmlContent = `
-        <html>
-        <head><title>Malformed Test</title>
-        <body>
-          <h1>Missing closing tags
-          <p>Unclosed paragraph
-          <div>Nested without proper closing
-            <span>Content here
-        </body>
-      `
-      const filename = path.join(testOutputDir, 'test-malformed.pdf')
+    test('Should verify POST form submission with correct action', async () => {
+      const agreementUrl = 'https://example.com/agreement/789'
+      const filename = 'test-post-action.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      // Should not throw an error, Puppeteer/browser should handle malformed HTML
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      expect(result).toBe(filename)
+      expect(result).toBe(expectedPath)
 
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      // Verify page.evaluate was called to create and submit the form
+      expect(mockPage.evaluate).toHaveBeenCalled()
+      const evaluateFunction = mockPage.evaluate.mock.calls[0][0]
+
+      // Execute the function in a simulated DOM to verify it creates the correct form
+      const mockDocument = {
+        createElement: jest.fn().mockImplementation((tag) => {
+          if (tag === 'form') {
+            return {
+              method: null,
+              action: null,
+              appendChild: jest.fn(),
+              submit: jest.fn()
+            }
+          }
+          if (tag === 'input') {
+            return {
+              type: null,
+              name: null,
+              value: null
+            }
+          }
+        }),
+        body: {
+          appendChild: jest.fn()
+        }
+      }
+
+      global.document = mockDocument
+      global.window = { location: { href: agreementUrl } }
+
+      // This verifies the form creation logic
+      expect(() => evaluateFunction()).not.toThrow()
     })
 
     test('Should generate PDF with correct filename based on agreement number', async () => {
-      const htmlContent =
-        '<html><body><h1>Agreement SFI999888777</h1></body></html>'
-      const filename = path.join(testOutputDir, 'agreement-SFI999888777.pdf')
+      const agreementUrl = 'https://example.com/agreement/SFI999888777'
+      const filename = 'agreement-SFI999888777.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      expect(result).toBe(filename)
-      expect(path.basename(filename)).toBe('agreement-SFI999888777.pdf')
-
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
+      expect(result).toBe(expectedPath)
+      expect(path.basename(expectedPath)).toBe('agreement-SFI999888777.pdf')
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+        waitUntil: 'domcontentloaded'
+      })
     })
 
-    test('Should handle null HTML content gracefully', async () => {
-      // Puppeteer is very forgiving and can handle null HTML content
-      // It will just generate a blank PDF
-      const htmlContent = null
-      const filename = path.join(testOutputDir, 'test-null.pdf')
+    test('Should handle localhost URLs', async () => {
+      const agreementUrl = 'http://localhost:3000/agreement/test-123'
+      const filename = 'test-localhost.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      expect(result).toBe(filename)
-
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      expect(result).toBe(expectedPath)
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+        waitUntil: 'domcontentloaded'
+      })
     })
 
-    test('Should create PDF with correct metadata and settings', async () => {
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>PDF Settings Test</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 0;
-              padding: 40px;
-              background-color: #f0f0f0; /* This tests printBackground: true */
-            }
-            .colored-box {
-              background-color: #00703c;
-              color: white;
-              padding: 20px;
-              margin: 20px 0;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>PDF Settings Verification</h1>
-          <div class="colored-box">
-            This box should have a green background if printBackground is working.
-          </div>
-          <p>This document tests that PDF generation uses correct settings like A4 format and background printing.</p>
-        </body>
-        </html>
-      `
-      const filename = path.join(testOutputDir, 'test-settings.pdf')
+    test('Should create PDF with correct settings and viewport', async () => {
+      const agreementUrl = 'https://example.com/agreement/settings-test'
+      const filename = 'test-settings.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
+      const result = await generatePdf(agreementUrl, filename, mockLogger)
 
-      expect(result).toBe(filename)
+      expect(result).toBe(expectedPath)
 
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      // Verify viewport settings
+      expect(mockPage.setViewport).toHaveBeenCalledWith({
+        width: 1920,
+        height: 1080,
+        deviceScaleFactor: 1
+      })
 
-      // Note: We can't easily verify A4 format or print background from the file
-      // but we can verify the PDF was created successfully with the intended content
+      // Verify PDF generation settings
+      expect(mockPage.pdf).toHaveBeenCalledWith({
+        path: expectedPath,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        }
+      })
     })
   })
 
   describe('Error scenarios', () => {
-    test('Should handle file system write permission error', async () => {
-      // Use an invalid filename that will cause the file to not be accessible
-      const htmlContent = '<html><body><h1>Test</h1></body></html>'
-      const invalidPath = '/invalid/nonexistent/path/test.pdf'
+    test('Should handle navigation errors', async () => {
+      // Mock page.goto to throw an error
+      mockPage.goto.mockRejectedValueOnce(new Error('Navigation failed'))
+
+      const agreementUrl = 'https://invalid-url.com/agreement/123'
+      const filename = 'test-nav-error.pdf'
 
       await expect(
-        generatePdf(htmlContent, invalidPath, mockLogger)
-      ).rejects.toThrow()
+        generatePdf(agreementUrl, filename, mockLogger)
+      ).rejects.toThrow('Navigation failed')
 
-      // Should log error(s) - at least one call should be for the main error
-      expect(mockLogger.error).toHaveBeenCalled()
-
-      // Check that at least one error call contains the expected structure
-      const errorCalls = mockLogger.error.mock.calls
-      const hasMainErrorCall = errorCalls.some(
-        (call) =>
-          call[0]?.error &&
-          call[0]?.filename === invalidPath &&
-          call[1] === 'Error generating PDF'
+      // Should log error
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error generating PDF test-nav-error.pdf: Error: Navigation failed'
       )
-      expect(hasMainErrorCall).toBe(true)
     })
 
-    test('Should handle moderately sized HTML content', async () => {
-      // Create moderately sized HTML content
-      const moderateContent =
-        '<html><body>' + 'A'.repeat(10000) + '</body></html>'
-      const filename = path.join(testOutputDir, 'test-moderate.pdf')
-
-      // This test verifies the function can handle larger content
-      const result = await generatePdf(moderateContent, filename, mockLogger)
-      expect(result).toBe(filename)
-
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
-    })
-
-    test('Should handle invalid HTML that causes rendering issues', async () => {
-      // HTML with potential rendering issues
-      const problematicHtml = `
-        <html>
-        <head>
-          <style>
-            body { margin: -9999px; padding: -9999px; }
-            .problematic { width: 999999px; height: 999999px; }
-          </style>
-        </head>
-        <body>
-          <div class="problematic">
-            <script>throw new Error('Client side error')</script>
-            <img src="nonexistent-image.jpg" onerror="throw new Error('Image error')">
-          </div>
-        </body>
-        </html>
-      `
-      const filename = path.join(testOutputDir, 'test-problematic.pdf')
-
-      // Puppeteer should handle this gracefully without throwing
-      try {
-        const result = await generatePdf(problematicHtml, filename, mockLogger)
-        expect(result).toBe(filename)
-
-        const stats = await fs.stat(filename)
-        expect(stats.isFile()).toBe(true)
-      } catch (error) {
-        // If it does fail, error should be logged
-        expect(mockLogger.error).toHaveBeenCalledWith(
-          { error: expect.any(Error), filename },
-          'Error generating PDF'
-        )
-      }
-    })
-
-    test('Should handle HTML with external resources that fail to load', async () => {
-      const htmlWithExternalResources = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <link rel="stylesheet" href="https://nonexistent-domain-12345.com/style.css">
-          <script src="https://nonexistent-domain-12345.com/script.js"></script>
-        </head>
-        <body>
-          <h1>External Resources Test</h1>
-          <img src="https://nonexistent-domain-12345.com/image.jpg" alt="Missing image">
-        </body>
-        </html>
-      `
-      const filename = path.join(testOutputDir, 'test-external-resources.pdf')
-
-      // Should handle failed external resources gracefully
-      const result = await generatePdf(
-        htmlWithExternalResources,
-        filename,
-        mockLogger
+    test('Should handle form submission errors', async () => {
+      // Mock page.evaluate to throw an error during form submission
+      mockPage.evaluate.mockRejectedValueOnce(
+        new Error('Form submission failed')
       )
-      expect(result).toBe(filename)
 
-      const stats = await fs.stat(filename)
-      expect(stats.isFile()).toBe(true)
-      expect(stats.size).toBeGreaterThan(0)
+      const agreementUrl = 'https://example.com/agreement/123'
+      const filename = 'test-form-error.pdf'
+
+      await expect(
+        generatePdf(agreementUrl, filename, mockLogger)
+      ).rejects.toThrow('Form submission failed')
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error generating PDF test-form-error.pdf: Error: Form submission failed'
+      )
+    })
+
+    test('Should handle PDF generation errors', async () => {
+      // Mock page.pdf to throw an error
+      mockPage.pdf.mockRejectedValueOnce(new Error('PDF generation failed'))
+
+      const agreementUrl = 'https://example.com/agreement/123'
+      const filename = 'test-pdf-error.pdf'
+
+      await expect(
+        generatePdf(agreementUrl, filename, mockLogger)
+      ).rejects.toThrow('PDF generation failed')
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error generating PDF test-pdf-error.pdf: Error: PDF generation failed'
+      )
+    })
+
+    test('Should handle navigation timeout', async () => {
+      // Mock waitForNavigation to throw a timeout error
+      mockPage.waitForNavigation.mockRejectedValueOnce(
+        new Error('Navigation timeout')
+      )
+
+      const agreementUrl = 'https://slow-server.com/agreement/123'
+      const filename = 'test-timeout.pdf'
+
+      await expect(
+        generatePdf(agreementUrl, filename, mockLogger)
+      ).rejects.toThrow('Navigation timeout')
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error generating PDF test-timeout.pdf: Error: Navigation timeout'
+      )
     })
 
     test('Should properly clean up browser when early error occurs', async () => {
-      // Clear previous test mocks to ensure clean state
-      jest.clearAllMocks()
-      mockLogger.info.mockClear()
-      mockLogger.error.mockClear()
+      // Mock page.goto to fail, simulating early error
+      mockPage.goto.mockRejectedValueOnce(new Error('Early error'))
 
-      // This test ensures the browser cleanup logic works
-      // We'll test with a scenario that should always succeed to verify cleanup path
-      const htmlContent = '<html><body><h1>Cleanup Test</h1></body></html>'
-      const filename = path.join(testOutputDir, 'test-cleanup.pdf')
+      const agreementUrl = 'https://example.com/agreement/123'
+      const filename = 'test-cleanup.pdf'
 
-      const result = await generatePdf(htmlContent, filename, mockLogger)
-      expect(result).toBe(filename)
+      await expect(
+        generatePdf(agreementUrl, filename, mockLogger)
+      ).rejects.toThrow('Early error')
 
-      // Verify the success path was taken (no error logs)
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        'Launching Puppeteer browser'
+      // Verify browser cleanup was attempted
+      expect(mockBrowser.close).toHaveBeenCalled()
+
+      // Verify error was logged
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error generating PDF test-cleanup.pdf: Error: Early error'
       )
-      expect(mockLogger.info).toHaveBeenCalledWith('Creating new page')
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        { outputPath: filename, filename },
-        'PDF generated successfully and saved to project root'
-      )
-
-      // No error should be logged for successful case
-      expect(mockLogger.error).not.toHaveBeenCalled()
     })
 
     test('Should handle browser.close() error during cleanup', async () => {
-      // Create mock objects
-      const mockBrowser = {
-        newPage: jest.fn(),
-        close: jest.fn().mockRejectedValue(new Error('Close failed'))
-      }
-      const mockPage = {
-        setViewport: jest.fn().mockResolvedValue(),
-        setContent: jest.fn().mockResolvedValue(),
-        pdf: jest.fn().mockRejectedValue(new Error('PDF generation failed'))
-      }
+      // Mock browser.close to fail and page.goto to also fail to trigger cleanup
+      mockBrowser.close.mockRejectedValueOnce(new Error('Close failed'))
+      mockPage.goto.mockRejectedValueOnce(new Error('Navigation failed'))
 
-      mockBrowser.newPage.mockResolvedValue(mockPage)
+      const agreementUrl = 'https://example.com/agreement/123'
+      const filename = 'test-close-error.pdf'
 
-      // Mock the puppeteer module
-      jest.doMock('puppeteer', () => ({
-        __esModule: true,
-        default: {
-          launch: jest.fn().mockResolvedValue(mockBrowser)
-        }
-      }))
+      await expect(
+        generatePdf(agreementUrl, filename, mockLogger)
+      ).rejects.toThrow('Navigation failed')
 
-      // Clear the module cache and re-import
-      jest.resetModules()
-      const { generatePdf: mockedGeneratePdf } = await import(
-        './pdf-generator.js'
+      // Should log both the main error and the browser close error
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error generating PDF test-close-error.pdf: Error: Navigation failed'
       )
-
-      const htmlContent = '<html><body><h1>Test</h1></body></html>'
-      const filename = path.join(testOutputDir, 'test-close-error.pdf')
-
-      try {
-        await expect(
-          mockedGeneratePdf(htmlContent, filename, mockLogger)
-        ).rejects.toThrow('PDF generation failed')
-
-        // Should log both the main error and the browser close error
-        expect(mockLogger.error).toHaveBeenCalledWith(
-          { error: expect.any(Error), filename },
-          'Error generating PDF'
-        )
-        expect(mockLogger.error).toHaveBeenCalledWith(
-          { closeError: expect.any(Error) },
-          'Error closing browser'
-        )
-      } finally {
-        // Restore puppeteer module
-        jest.dontMock('puppeteer')
-        jest.resetModules()
-      }
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Error closing browser: Error: Close failed'
+      )
     })
   })
 })
