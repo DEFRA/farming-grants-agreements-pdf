@@ -169,9 +169,10 @@ describe('File Upload Service', () => {
       const mockUploadResult = {
         success: true,
         bucket: 'test-bucket',
-        key: 'agreements/agreement-123.pdf',
+        key: 'agreements/agreement-123/1/agreement-123.pdf',
         etag: '"test-etag"',
-        location: 's3://test-bucket/agreements/agreement-123.pdf'
+        location:
+          's3://test-bucket/agreements/agreement-123/1/agreement-123.pdf'
       }
 
       // Mock uploadPdfToS3 by mocking the internal behavior
@@ -183,6 +184,8 @@ describe('File Upload Service', () => {
       const result = await uploadPdf(
         testPdfPath,
         testFilename,
+        'agreement-123',
+        '1',
         mockLogger,
         mockS3Client
       )
@@ -210,6 +213,8 @@ describe('File Upload Service', () => {
       const result = await uploadPdf(
         testPdfPath,
         testFilename,
+        'agreement-123',
+        '1',
         mockLogger,
         mockS3Client
       )
@@ -226,7 +231,14 @@ describe('File Upload Service', () => {
       fs.readFile.mockResolvedValue(Buffer.from('test content'))
 
       await expect(
-        uploadPdf(testPdfPath, testFilename, mockLogger, mockS3Client)
+        uploadPdf(
+          testPdfPath,
+          testFilename,
+          'agreement-123',
+          '1',
+          mockLogger,
+          mockS3Client
+        )
       ).rejects.toThrow('Upload failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -243,13 +255,15 @@ describe('File Upload Service', () => {
       await uploadPdf(
         '/some/path/agreement-456.pdf',
         'agreement-456.pdf',
+        'agreement-456',
+        '1',
         mockLogger,
         mockS3Client
       )
 
       expect(PutObjectCommand).toHaveBeenCalledWith(
         expect.objectContaining({
-          Key: 'agreements/agreement-456.pdf'
+          Key: 'agreements/agreement-456/1/agreement-456.pdf'
         })
       )
     })

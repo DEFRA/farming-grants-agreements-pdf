@@ -31,7 +31,7 @@ const generateAndUploadPdf = async (data, logger) => {
     return pdfPath
   }
 
-  await uploadPdfToS3(pdfPath, filename, agreementNumber, logger)
+  await uploadPdfToS3(pdfPath, filename, agreementNumber, version, logger)
   return pdfPath
 }
 
@@ -40,12 +40,25 @@ const generateAndUploadPdf = async (data, logger) => {
  * @param {string} pdfPath - The path to the PDF file
  * @param {string} filename - The filename for the PDF
  * @param {string} agreementNumber - The agreement number
+ * @param {string} version - The agreement version
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @returns {Promise<void>}
  */
-const uploadPdfToS3 = async (pdfPath, filename, agreementNumber, logger) => {
+const uploadPdfToS3 = async (
+  pdfPath,
+  filename,
+  agreementNumber,
+  version,
+  logger
+) => {
   try {
-    const uploadResult = await uploadPdf(pdfPath, filename, logger)
+    const uploadResult = await uploadPdf(
+      pdfPath,
+      filename,
+      agreementNumber,
+      version,
+      logger
+    )
     logger.info(
       `Agreement ${agreementNumber} PDF uploaded successfully (${uploadResult.success}) to S3`
     )

@@ -62,11 +62,31 @@ export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
   }
 }
 
-export async function uploadPdf(pdfPath, filename, logger, s3Client = null) {
+/**
+ * Upload PDF to S3 and cleanup local file
+ * @param {string} pdfPath Local path to the PDF file
+ * @param {string} filename filename for the PDF file
+ * @param {string} agreementNumber Farming agreement document number
+ * @param {string} version Farming agreement document version
+ * @param {Logger} logger Logger instance
+ * @param s3Client S3 client instance
+ * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
+ */
+export async function uploadPdf(
+  pdfPath,
+  filename,
+  agreementNumber,
+  version,
+  logger,
+  s3Client = null
+) {
   try {
     logger.info(`Starting PDF upload process for ${filename}`)
 
-    const key = `agreements/${filename}`
+    const prefix = 'agreements'
+    const key = [prefix, agreementNumber, version, filename]
+      .filter(Boolean)
+      .join('/')
 
     const uploadResult = await uploadPdfToS3(pdfPath, key, logger, s3Client)
 
