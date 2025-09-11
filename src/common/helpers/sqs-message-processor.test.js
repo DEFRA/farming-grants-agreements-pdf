@@ -93,7 +93,7 @@ describe('SQS message processor', () => {
         expect.stringContaining('Processing agreement offer from event')
       )
       expect(generatePdf).toHaveBeenCalledWith(
-        'https://example.com/agreement/SFI123456789',
+        mockPayload.data,
         'SFI123456789-1.pdf',
         mockLogger
       )
@@ -133,7 +133,7 @@ describe('SQS message processor', () => {
       // Should not throw - PDF generation failure doesn't break agreement creation
       await handleEvent('aws-message-id', mockPayload, mockLogger)
       expect(generatePdf).toHaveBeenCalledWith(
-        'https://example.com/agreement/SFI123456789',
+        mockPayload.data,
         'SFI123456789-1.pdf',
         mockLogger
       )

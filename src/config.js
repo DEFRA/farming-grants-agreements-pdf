@@ -47,6 +47,12 @@ const config = convict({
     default: 'local',
     env: 'ENVIRONMENT'
   },
+  jwtSecret: {
+    doc: 'JWT Secret',
+    format: String,
+    default: 'default-agreements-jwt-secret',
+    env: 'AGREEMENTS_JWT_SECRET'
+  },
   aws: {
     region: {
       doc: 'AWS region',
@@ -65,12 +71,6 @@ const config = convict({
       format: String,
       default: 'test',
       env: 'AWS_SECRET_ACCESS_KEY'
-    },
-    jwtSecret: {
-      doc: 'JWT Secret',
-      format: String,
-      default: 'default-agreements-jwt-secret',
-      env: 'AGREEMENTS_JWT_SECRET'
     },
     s3: {
       bucket: {
