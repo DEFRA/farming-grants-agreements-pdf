@@ -1,6 +1,5 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'fs/promises'
-import path from 'path'
 import { config } from '../config.js'
 
 function createS3Client() {
@@ -24,7 +23,7 @@ function createS3Client() {
 
 export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
   try {
-    logger.info({ filePath, key }, 'Starting PDF upload to S3')
+    logger.info(`Starting PDF upload to S3. key: ${key}, filepath: ${filePath}`)
 
     const fileContent = await fs.readFile(filePath)
     const bucket = config.get('aws.s3.bucket')
@@ -47,13 +46,7 @@ export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
     const result = await client.send(command)
 
     logger.info(
-      {
-        bucket,
-        key,
-        etag: result.ETag,
-        location: `s3://${bucket}/${key}`
-      },
-      'PDF successfully uploaded to S3'
+      `PDF successfully uploaded to S3. key: ${key}, etag: ${result.ETag}, location: s3://${bucket}/${key}`
     )
 
     return {
@@ -69,11 +62,31 @@ export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
   }
 }
 
-export async function uploadPdf(pdfPath, filename, logger, s3Client = null) {
+/**
+ * Upload PDF to S3 and cleanup local file
+ * @param {string} pdfPath Local path to the PDF file
+ * @param {string} filename filename for the PDF file
+ * @param {string} agreementNumber Farming agreement document number
+ * @param {string} version Farming agreement document version
+ * @param {Logger} logger Logger instance
+ * @param s3Client S3 client instance
+ * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
+ */
+export async function uploadPdf(
+  pdfPath,
+  filename,
+  agreementNumber,
+  version,
+  logger,
+  s3Client = null
+) {
   try {
     logger.info(`Starting PDF upload process for ${filename}`)
 
-    const key = `agreements/${path.basename(filename)}`
+    const prefix = 'agreements'
+    const key = [prefix, agreementNumber, version, filename]
+      .filter(Boolean)
+      .join('/')
 
     const uploadResult = await uploadPdfToS3(pdfPath, key, logger, s3Client)
 
