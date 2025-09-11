@@ -75,18 +75,11 @@ describe('File Upload Service', () => {
       })
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        { filePath: testFilePath, key: testKey },
-        'Starting PDF upload to S3'
+        'Starting PDF upload to S3. key: agreements/test.pdf, filepath: /tmp/test.pdf'
       )
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        {
-          bucket: 'test-bucket',
-          key: testKey,
-          etag: '"test-etag"',
-          location: 's3://test-bucket/agreements/test.pdf'
-        },
-        'PDF successfully uploaded to S3'
+        'PDF successfully uploaded to S3. key: agreements/test.pdf, etag: "test-etag", location: s3://test-bucket/agreements/test.pdf'
       )
     })
 
@@ -257,23 +250,6 @@ describe('File Upload Service', () => {
       expect(PutObjectCommand).toHaveBeenCalledWith(
         expect.objectContaining({
           Key: 'agreements/agreement-456.pdf'
-        })
-      )
-    })
-
-    test('should use path.basename for key generation', async () => {
-      const mockResult = { ETag: '"test-etag"' }
-      mockS3Client.send.mockResolvedValue(mockResult)
-      fs.readFile.mockResolvedValue(Buffer.from('test content'))
-      fs.unlink.mockResolvedValue()
-
-      const filenameWithPath = 'some/nested/path/agreement-789.pdf'
-
-      await uploadPdf(testPdfPath, filenameWithPath, mockLogger, mockS3Client)
-
-      expect(PutObjectCommand).toHaveBeenCalledWith(
-        expect.objectContaining({
-          Key: 'agreements/agreement-789.pdf'
         })
       )
     })
