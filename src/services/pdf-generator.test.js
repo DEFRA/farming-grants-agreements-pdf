@@ -18,6 +18,20 @@ jest.mock('fs/promises', () => ({
   access: jest.fn().mockResolvedValue(undefined)
 }))
 
+// Mock @hapi/jwt
+jest.mock('@hapi/jwt', () => ({
+  token: {
+    generate: jest.fn().mockReturnValue('mock-jwt-token')
+  }
+}))
+
+// Mock config
+jest.mock('../config.js', () => ({
+  config: {
+    get: jest.fn().mockReturnValue('mock-jwt-secret')
+  }
+}))
+
 const mockLogger = {
   info: jest.fn(),
   error: jest.fn()
@@ -27,6 +41,7 @@ const mockLogger = {
 const mockPage = {
   setViewport: jest.fn().mockResolvedValue(undefined),
   goto: jest.fn().mockResolvedValue(undefined),
+  setExtraHTTPHeaders: jest.fn().mockResolvedValue(undefined),
   evaluate: jest.fn().mockResolvedValue(undefined),
   waitForNavigation: jest.fn().mockResolvedValue(undefined),
   pdf: jest.fn().mockResolvedValue(undefined)
@@ -79,18 +94,24 @@ describe('pdf-generator', () => {
 
   describe('#generatePdf', () => {
     test('Should generate PDF successfully from agreement URL', async () => {
-      const agreementUrl = 'https://example.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-simple.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       // Verify the result path
       expect(result).toBe(expectedPath)
 
       // Verify Puppeteer interactions
-      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
+      })
+      expect(mockPage.setExtraHTTPHeaders).toHaveBeenCalledWith({
+        'x-encrypted-auth': 'mock-jwt-token'
       })
       expect(mockPage.evaluate).toHaveBeenCalled()
       expect(mockPage.waitForNavigation).toHaveBeenCalledWith({
@@ -127,17 +148,20 @@ describe('pdf-generator', () => {
     })
 
     test('Should generate PDF with agreement URL containing complex ID', async () => {
-      const agreementUrl = 'https://example.com/agreement/SFI123456789'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/SFI123456789',
+        sbi: '123456789'
+      }
       const filename = 'test-complex.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       // Verify the result path
       expect(result).toBe(expectedPath)
 
       // Verify the correct URL was navigated to
-      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
       })
 
@@ -148,37 +172,46 @@ describe('pdf-generator', () => {
     })
 
     test('Should handle URL with query parameters', async () => {
-      const agreementUrl = 'https://example.com/agreement?id=123&type=test'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement?id=123&type=test',
+        sbi: '123456789'
+      }
       const filename = 'test-query-params.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       expect(result).toBe(expectedPath)
-      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
       })
     })
 
     test('Should handle HTTPS URLs', async () => {
-      const agreementUrl = 'https://secure.example.com/agreement/456'
+      const agreementData = {
+        agreementUrl: 'https://secure.example.com/agreement/456',
+        sbi: '123456789'
+      }
       const filename = 'test-https.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       expect(result).toBe(expectedPath)
-      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
       })
     })
 
     test('Should verify POST form submission with correct action', async () => {
-      const agreementUrl = 'https://example.com/agreement/789'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/789',
+        sbi: '123456789'
+      }
       const filename = 'test-post-action.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       expect(result).toBe(expectedPath)
 
@@ -211,45 +244,54 @@ describe('pdf-generator', () => {
       }
 
       global.document = mockDocument
-      global.window = { location: { href: agreementUrl } }
+      global.window = { location: { href: agreementData.agreementUrl } }
 
       // This verifies the form creation logic
       expect(() => evaluateFunction()).not.toThrow()
     })
 
     test('Should generate PDF with correct filename based on agreement number', async () => {
-      const agreementUrl = 'https://example.com/agreement/SFI999888777'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/SFI999888777',
+        sbi: '123456789'
+      }
       const filename = 'agreement-SFI999888777.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       expect(result).toBe(expectedPath)
       expect(path.basename(expectedPath)).toBe('agreement-SFI999888777.pdf')
-      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
       })
     })
 
     test('Should handle localhost URLs', async () => {
-      const agreementUrl = 'http://localhost:3000/agreement/test-123'
+      const agreementData = {
+        agreementUrl: 'http://localhost:3000/agreement/test-123',
+        sbi: '123456789'
+      }
       const filename = 'test-localhost.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       expect(result).toBe(expectedPath)
-      expect(mockPage.goto).toHaveBeenCalledWith(agreementUrl, {
+      expect(mockPage.goto).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
       })
     })
 
     test('Should create PDF with correct settings and viewport', async () => {
-      const agreementUrl = 'https://example.com/agreement/settings-test'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/settings-test',
+        sbi: '123456789'
+      }
       const filename = 'test-settings.pdf'
       const expectedPath = path.resolve(process.cwd(), filename)
 
-      const result = await generatePdf(agreementUrl, filename, mockLogger)
+      const result = await generatePdf(agreementData, filename, mockLogger)
 
       expect(result).toBe(expectedPath)
 
@@ -280,11 +322,14 @@ describe('pdf-generator', () => {
       // Mock page.goto to throw an error
       mockPage.goto.mockRejectedValueOnce(new Error('Navigation failed'))
 
-      const agreementUrl = 'https://invalid-url.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://invalid-url.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-nav-error.pdf'
 
       await expect(
-        generatePdf(agreementUrl, filename, mockLogger)
+        generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Navigation failed')
 
       // Should log error
@@ -299,11 +344,14 @@ describe('pdf-generator', () => {
         new Error('Form submission failed')
       )
 
-      const agreementUrl = 'https://example.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-form-error.pdf'
 
       await expect(
-        generatePdf(agreementUrl, filename, mockLogger)
+        generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Form submission failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -315,11 +363,14 @@ describe('pdf-generator', () => {
       // Mock page.pdf to throw an error
       mockPage.pdf.mockRejectedValueOnce(new Error('PDF generation failed'))
 
-      const agreementUrl = 'https://example.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-pdf-error.pdf'
 
       await expect(
-        generatePdf(agreementUrl, filename, mockLogger)
+        generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('PDF generation failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -333,11 +384,14 @@ describe('pdf-generator', () => {
         new Error('Navigation timeout')
       )
 
-      const agreementUrl = 'https://slow-server.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://slow-server.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-timeout.pdf'
 
       await expect(
-        generatePdf(agreementUrl, filename, mockLogger)
+        generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Navigation timeout')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -349,11 +403,14 @@ describe('pdf-generator', () => {
       // Mock page.goto to fail, simulating early error
       mockPage.goto.mockRejectedValueOnce(new Error('Early error'))
 
-      const agreementUrl = 'https://example.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-cleanup.pdf'
 
       await expect(
-        generatePdf(agreementUrl, filename, mockLogger)
+        generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Early error')
 
       // Verify browser cleanup was attempted
@@ -370,11 +427,14 @@ describe('pdf-generator', () => {
       mockBrowser.close.mockRejectedValueOnce(new Error('Close failed'))
       mockPage.goto.mockRejectedValueOnce(new Error('Navigation failed'))
 
-      const agreementUrl = 'https://example.com/agreement/123'
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
       const filename = 'test-close-error.pdf'
 
       await expect(
-        generatePdf(agreementUrl, filename, mockLogger)
+        generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Navigation failed')
 
       // Should log both the main error and the browser close error

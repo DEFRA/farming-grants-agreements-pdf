@@ -1,31 +1,37 @@
 import puppeteer from 'puppeteer'
 import path from 'path'
 import fs from 'fs/promises'
+import * as Jwt from '@hapi/jwt'
+import { config } from '../config.js'
+
+async function createBrowser(logger) {
+  logger.info('Launching Puppeteer browser')
+
+  return await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--disable-gpu',
+      '--window-size=1920x1080'
+    ]
+  })
+}
 
 /**
  *
- * @param {string} agreementUrl The agreement URL to be used to generate the PDF
+ * @param {string} agreementData The agreement data necessary to generate the PDF
  * @param {string} filename The filename to store the generated PDF
  * @param logger The logger instance
  * @returns {Promise<string>} output path of the file
  */
-export async function generatePdf(agreementUrl, filename, logger) {
+export async function generatePdf(agreementData, filename, logger) {
   let browser = null
 
   try {
-    logger.info('Launching Puppeteer browser')
-
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-        '--window-size=1920x1080'
-      ]
-    })
+    browser = await createBrowser(logger)
 
     logger.info('Creating new page')
     const page = await browser.newPage()
@@ -36,8 +42,22 @@ export async function generatePdf(agreementUrl, filename, logger) {
       deviceScaleFactor: 1
     })
 
-    logger.info(`Navigating to agreement URL ${agreementUrl} with POST request`)
-    await page.goto(agreementUrl, { waitUntil: 'domcontentloaded' })
+    const source = 'entra'
+    const jwtSecret = config.get('jwtSecret')
+    const encryptedAuth = Jwt.token.generate(
+      { sbi: agreementData.sbi.toString(), source },
+      jwtSecret
+    )
+    logger.info(
+      `Navigating to agreement URL ${agreementData.agreementUrl} with POST request`
+    )
+    await page.goto(agreementData.agreementUrl, {
+      waitUntil: 'domcontentloaded'
+    })
+
+    await page.setExtraHTTPHeaders({
+      'x-encrypted-auth': encryptedAuth
+    })
 
     await page.evaluate(() => {
       const form = document.createElement('form')

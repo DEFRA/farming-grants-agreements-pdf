@@ -22,7 +22,7 @@ const generateAndUploadPdf = async (data, logger) => {
   let pdfPath = ''
 
   try {
-    pdfPath = await generatePdf(data.agreementUrl, filename, logger)
+    pdfPath = await generatePdf(data, filename, logger)
     logger.info(`PDF ${filename} generated successfully and save to ${pdfPath}`)
   } catch (pdfError) {
     logger.error(
