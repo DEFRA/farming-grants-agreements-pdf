@@ -81,8 +81,6 @@ export async function uploadPdf(
   s3Client = null
 ) {
   try {
-    logger.info(`Starting PDF upload process for ${filename}`)
-
     const prefix = 'agreements'
     const key = [prefix, agreementNumber, version, filename]
       .filter(Boolean)
@@ -92,7 +90,6 @@ export async function uploadPdf(
 
     try {
       await fs.unlink(pdfPath)
-      logger.info(`Local PDF file ${pdfPath} cleaned up after upload`)
     } catch (cleanupError) {
       logger.warn(
         `Failed to cleanup local PDF file ${pdfPath}: ${cleanupError.message}`

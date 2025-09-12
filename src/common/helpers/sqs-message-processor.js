@@ -10,9 +10,9 @@ import { uploadPdf } from '../../services/file-upload.js'
  */
 const generateAndUploadPdf = async (data, logger) => {
   const agreementNumber = data.agreementNumber
+  const version = data.version
 
   // version is currently hardcoded until the version is passed from the API service
-  const version = 1
   const filename = `${agreementNumber}-${version}.pdf`
 
   logger.info(
@@ -40,7 +40,7 @@ const generateAndUploadPdf = async (data, logger) => {
  * @param {string} pdfPath - The path to the PDF file
  * @param {string} filename - The filename for the PDF
  * @param {string} agreementNumber - The agreement number
- * @param {string} version - The agreement version
+ * @param {number} version - The agreement version
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @returns {Promise<void>}
  */
