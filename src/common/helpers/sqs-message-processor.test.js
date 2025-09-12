@@ -83,6 +83,7 @@ describe('SQS message processor', () => {
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
+          version: 1,
           agreementUrl: 'https://example.com/agreement/SFI123456789'
         }
       }
@@ -126,6 +127,7 @@ describe('SQS message processor', () => {
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
+          version: 1,
           agreementUrl: 'https://example.com/agreement/SFI123456789'
         }
       }
