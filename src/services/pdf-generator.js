@@ -32,8 +32,6 @@ export async function generatePdf(agreementData, filename, logger) {
 
   try {
     browser = await createBrowser(logger)
-
-    logger.info('Creating new page')
     const page = await browser.newPage()
 
     await page.setViewport({

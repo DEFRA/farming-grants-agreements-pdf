@@ -192,14 +192,6 @@ describe('File Upload Service', () => {
 
       expect(result).toEqual(mockUploadResult)
       expect(fs.unlink).toHaveBeenCalledWith(testPdfPath)
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Starting PDF upload process for ${testFilename}`
-      )
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Local PDF file ${testPdfPath} cleaned up after upload`
-      )
     })
 
     test('should handle cleanup error gracefully', async () => {

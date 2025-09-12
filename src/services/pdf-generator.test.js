@@ -133,7 +133,6 @@ describe('pdf-generator', () => {
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Launching Puppeteer browser'
       )
-      expect(mockLogger.info).toHaveBeenCalledWith('Creating new page')
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Navigating to agreement URL https://example.com/agreement/123 with POST request'
       )
