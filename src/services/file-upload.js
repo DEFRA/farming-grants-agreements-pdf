@@ -3,25 +3,30 @@ import fs from 'fs/promises'
 import { config } from '../config.js'
 
 function createS3Client() {
-  const clientConfig = {
-    region: config.get('aws.region'),
-    endpoint: config.get('aws.s3.endpoint'),
-    credentials: {
-      accessKeyId: config.get('aws.accessKeyId'),
-      secretAccessKey: config.get('aws.secretAccessKey')
-    },
-    forcePathStyle: true
-  }
-
   return new S3Client(
     process.env.NODE_ENV === 'development'
-      ? clientConfig
+      ? {
+          region: config.get('aws.region'),
+          endpoint: config.get('aws.s3.endpoint'),
+          credentials: {
+            accessKeyId: config.get('aws.accessKeyId'),
+            secretAccessKey: config.get('aws.secretAccessKey')
+          },
+          forcePathStyle: true
+        }
       : // Production will automatically use the default credentials
         {}
   )
 }
 
-export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
+/**
+ * Upload PDF to S3 Bucket
+ * @param {string} filePath File path of the PDF file
+ * @param {string} key S3 Key for the PDF file
+ * @param {Logger} logger Logger instance
+ * @returns {Promise<{success: boolean, bucket: *, key, etag, location: string}>}
+ */
+async function upload(filePath, key, logger) {
   try {
     logger.info(`Starting PDF upload to S3. key: ${key}, filepath: ${filePath}`)
 
@@ -40,7 +45,7 @@ export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
       ServerSideEncryption: 'AES256'
     }
 
-    const client = s3Client || createS3Client()
+    const client = createS3Client()
     const command = new PutObjectCommand(uploadParams)
 
     const result = await client.send(command)
@@ -69,7 +74,6 @@ export async function uploadPdfToS3(filePath, key, logger, s3Client = null) {
  * @param {string} agreementNumber Farming agreement document number
  * @param {string} version Farming agreement document version
  * @param {Logger} logger Logger instance
- * @param s3Client S3 client instance
  * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
  */
 export async function uploadPdf(
@@ -77,8 +81,7 @@ export async function uploadPdf(
   filename,
   agreementNumber,
   version,
-  logger,
-  s3Client = null
+  logger
 ) {
   try {
     const prefix = 'agreements'
@@ -86,7 +89,7 @@ export async function uploadPdf(
       .filter(Boolean)
       .join('/')
 
-    const uploadResult = await uploadPdfToS3(pdfPath, key, logger, s3Client)
+    const uploadResult = await upload(pdfPath, key, logger)
 
     try {
       await fs.unlink(pdfPath)
