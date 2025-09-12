@@ -2,22 +2,20 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'fs/promises'
 import { config } from '../config.js'
 
-function createS3Client() {
-  return new S3Client(
-    process.env.NODE_ENV === 'development'
-      ? {
-          region: config.get('aws.region'),
-          endpoint: config.get('aws.s3.endpoint'),
-          credentials: {
-            accessKeyId: config.get('aws.accessKeyId'),
-            secretAccessKey: config.get('aws.secretAccessKey')
-          },
-          forcePathStyle: true
-        }
-      : // Production will automatically use the default credentials
-        {}
-  )
-}
+const s3Client = new S3Client(
+  process.env.NODE_ENV === 'development'
+    ? {
+        region: config.get('aws.region'),
+        endpoint: config.get('aws.s3.endpoint'),
+        credentials: {
+          accessKeyId: config.get('aws.accessKeyId'),
+          secretAccessKey: config.get('aws.secretAccessKey')
+        },
+        forcePathStyle: true
+      }
+    : // Production will automatically use the default credentials
+      {}
+)
 
 /**
  * Upload PDF to S3 Bucket
@@ -45,10 +43,7 @@ async function upload(filePath, key, logger) {
       ServerSideEncryption: 'AES256'
     }
 
-    const client = createS3Client()
-    const command = new PutObjectCommand(uploadParams)
-
-    const result = await client.send(command)
+    const result = await s3Client.send(new PutObjectCommand(uploadParams))
 
     logger.info(
       `PDF successfully uploaded to S3. key: ${key}, etag: ${result.ETag}, location: s3://${bucket}/${key}`

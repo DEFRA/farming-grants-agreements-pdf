@@ -1,32 +1,43 @@
-import { uploadPdf } from './file-upload.js'
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import fs from 'fs/promises'
-import { config } from '../config.js'
+// Create a mock S3Client instance
+const mockS3Client = {
+  send: jest.fn()
+}
 
-// Mock dependencies
-jest.mock('@aws-sdk/client-s3')
-jest.mock('fs/promises')
-jest.mock('../config.js')
+// Mock all dependencies using jest.doMock to ensure they're applied before import
+jest.doMock('@aws-sdk/client-s3', () => ({
+  S3Client: jest.fn(() => mockS3Client),
+  PutObjectCommand: jest.fn()
+}))
+
+jest.doMock('fs/promises', () => ({
+  readFile: jest.fn(),
+  unlink: jest.fn()
+}))
+
+jest.doMock('../config.js', () => ({
+  config: {
+    get: jest.fn()
+  }
+}))
+
+// Now import everything after mocking
+const { uploadPdf } = require('./file-upload.js')
+const { PutObjectCommand } = require('@aws-sdk/client-s3')
+const fs = require('fs/promises')
+const { config } = require('../config.js')
 
 describe('File Upload Service', () => {
-  let mockS3Client
   let mockLogger
 
   beforeEach(() => {
+    // Clear all mocks first
+    jest.clearAllMocks()
+
     mockLogger = {
       info: jest.fn(),
       error: jest.fn(),
       warn: jest.fn()
     }
-
-    mockS3Client = {
-      send: jest.fn()
-    }
-
-    // Clear all mocks first
-    jest.clearAllMocks()
-
-    S3Client.mockImplementation(() => mockS3Client)
 
     // Mock config values
     config.get.mockImplementation((key) => {
@@ -55,9 +66,9 @@ describe('File Upload Service', () => {
           's3://test-bucket/agreements/agreement-123/1/agreement-123.pdf'
       }
 
-      // Mock file-upload.js upload function by mocking the internal behavior
-      const mockResult = { ETag: '"test-etag"' }
-      mockS3Client.send.mockResolvedValue(mockResult)
+      // Mock S3 send method to return ETag
+      const mockS3Result = { ETag: '"test-etag"' }
+      mockS3Client.send.mockResolvedValue(mockS3Result)
       fs.readFile.mockResolvedValue(Buffer.from('test content'))
       fs.unlink.mockResolvedValue()
 
