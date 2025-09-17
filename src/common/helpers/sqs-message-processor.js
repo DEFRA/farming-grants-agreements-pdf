@@ -98,7 +98,7 @@ const processOfferAcceptedEvent = async (
  * @returns {Promise<String>}
  */
 export const handleEvent = async (notificationMessageId, payload, logger) => {
-  if (payload.type.indexOf('offer.accepted') === -1) {
+  if (payload.type.indexOf('agreement.status.updated') === -1) {
     return Promise.reject(new Error('Unrecognized event type'))
   }
 
@@ -145,7 +145,7 @@ const handleProcessingError = (error, message, logger) => {
 export const processMessage = async (message, logger) => {
   try {
     const messageBody = JSON.parse(message.Body)
-    logger.info('Processing message body:', messageBody)
+    logger.info('Processing message body:', JSON.stringify(messageBody))
     await handleEvent(message.MessageId, messageBody, logger)
   } catch (error) {
     handleProcessingError(error, message, logger)

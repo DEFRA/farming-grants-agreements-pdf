@@ -44,7 +44,7 @@ async function createServer(options = {}) {
   // secureContext  - loads CA certificates from environment config
   // pulse          - provides shutdown handlers
   // router         - routes used in the app
-  // sqsClientPlugin - SQS consumer for processing offer.accepted messages (optional)
+  // sqsClientPlugin - SQS consumer for processing agreement.status.updated messages (optional)
   const plugins = [requestLogger, requestTracing, secureContext, pulse, router]
 
   if (!options.disableSQS) {

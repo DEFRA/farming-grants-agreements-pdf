@@ -18,7 +18,7 @@ describe('SQS message processor', () => {
   describe('processMessage', () => {
     it('should process valid SNS message', async () => {
       const mockPayload = {
-        type: 'offer.accepted',
+        type: 'agreement.status.updated',
         data: {
           agreementNumber: 'SFI123456789',
           correlationId: 'test-correlation-id',
@@ -76,7 +76,7 @@ describe('SQS message processor', () => {
   describe('handleEvent', () => {
     it('should generate PDF for agreement and upload it to S3', async () => {
       const mockPayload = {
-        type: 'offer.accepted',
+        type: 'agreement.status.updated',
         data: {
           agreementNumber: 'SFI123456789',
           correlationId: 'test-correlation-id',
@@ -120,7 +120,7 @@ describe('SQS message processor', () => {
       generatePdf.mockRejectedValue(pdfError)
 
       const mockPayload = {
-        type: 'offer.accepted',
+        type: 'agreement.status.updated',
         data: {
           agreementNumber: 'SFI123456789',
           correlationId: 'test-correlation-id',
