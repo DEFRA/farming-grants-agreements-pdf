@@ -612,10 +612,10 @@ describe('config', () => {
 
     test('should have correct SNS topic configuration', () => {
       expect(config.get('aws.sns.topic.offerAccepted.arn')).toBe(
-        'arn:aws:sns:eu-west-2:000000000000:agreement_accepted'
+        'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated'
       )
       expect(config.get('aws.sns.topic.offerAccepted.type')).toBe(
-        'io.onsite.agreement.offer.accepted'
+        'io.onsite.agreement.agreement.status.updated'
       )
     })
 

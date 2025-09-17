@@ -227,7 +227,7 @@ describe('SQS Client', () => {
       // Call handler with valid message
       const validMessage = {
         Body: JSON.stringify({
-          type: 'offer.accepted',
+          type: 'agreement.status.updated',
           data: { test: 'data' }
         }),
         MessageId: 'msg-12345'
