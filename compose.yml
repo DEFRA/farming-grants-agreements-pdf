@@ -79,7 +79,6 @@ services:
       QUEUE_NAME: create_agreement_pdf
       S3_BUCKET: farming-grants-agreements-pdf-bucket
       S3_ENDPOINT: http://localhost:4566
-      ENABLE_TEST_ENDPOINTS: true
       JWT_ENABLED: ${JWT_ENABLED:-false}
     networks:
       - cdp-tenant
