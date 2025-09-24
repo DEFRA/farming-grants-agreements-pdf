@@ -1,13 +1,13 @@
 import puppeteer from 'puppeteer'
-import path from 'path'
-import fs from 'fs/promises'
+import path from 'node:path'
+import fs from 'node:fs/promises'
 import * as Jwt from '@hapi/jwt'
 import { config } from '../config.js'
 
 async function createBrowser(logger) {
   logger.info('Launching Puppeteer browser')
 
-  return await puppeteer.launch({
+  return puppeteer.launch({
     headless: true,
     args: [
       '--no-sandbox',
@@ -57,7 +57,7 @@ export async function generatePdf(agreementData, filename, logger) {
     await page.evaluate(() => {
       const form = document.createElement('form')
       form.method = 'POST'
-      form.action = window.location.href
+      form.action = globalThis.location.href
 
       const input = document.createElement('input')
       input.type = 'hidden'
