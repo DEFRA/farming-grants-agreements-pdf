@@ -244,6 +244,7 @@ describe('pdf-generator', () => {
 
       global.document = mockDocument
       global.window = { location: { href: agreementData.agreementUrl } }
+      globalThis.location = { href: agreementData.agreementUrl }
 
       // This verifies the form creation logic
       expect(() => evaluateFunction()).not.toThrow()
