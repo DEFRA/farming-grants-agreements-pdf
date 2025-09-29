@@ -24,9 +24,10 @@ const generateAndUploadPdf = async (data, logger) => {
   try {
     pdfPath = await generatePdf(data, filename, logger)
     logger.info(`PDF ${filename} generated successfully and save to ${pdfPath}`)
-  } catch (pdfError) {
+  } catch (err) {
     logger.error(
-      `Failed to generate agreement ${agreementNumber}-${version} PDF. Error: ${pdfError}`
+      err,
+      `Failed to generate agreement ${agreementNumber}-${version} PDF from URL ${data.agreementUrl}`
     )
     return pdfPath
   }
@@ -62,9 +63,10 @@ const uploadPdfToS3 = async (
     logger.info(
       `Agreement ${agreementNumber} PDF uploaded successfully (${uploadResult.success}) to S3`
     )
-  } catch (uploadError) {
+  } catch (err) {
     logger.error(
-      `Failed to upload agreement ${agreementNumber} PDF ${pdfPath} to S3. Error: ${uploadError}`
+      err,
+      `Failed to upload agreement ${agreementNumber} PDF ${pdfPath} to S3`
     )
   }
 }
@@ -107,31 +109,27 @@ export const handleEvent = async (notificationMessageId, payload, logger) => {
 
 /**
  * Handle message processing errors
- * @param {Error} error - The error that occurred
+ * @param {Error} err - The error that occurred
  * @param {object} message - The SQS message that caused the error
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @throws {Error} Throws a Boom error
  */
-const handleProcessingError = (error, message, logger) => {
-  logger.error('Error processing message:', {
-    message,
-    error: error.message,
-    stack: error.stack
-  })
+const handleProcessingError = (err, message, logger) => {
+  logger.error(err, 'Error processing message')
 
-  if (error.name === 'SyntaxError') {
+  if (err.name === 'SyntaxError') {
     throw Boom.badData('Invalid message format', {
       message,
-      error: error.message
+      error: err.message
     })
   }
 
-  throw Boom.boomify(error, {
+  throw Boom.boomify(err, {
     statusCode: 500,
     message: 'Error processing SQS message',
     data: {
       message,
-      originalError: error.message
+      originalError: err.message
     }
   })
 }
@@ -147,7 +145,7 @@ export const processMessage = async (message, logger) => {
     const messageBody = JSON.parse(message.Body)
     logger.info('Processing message body:', JSON.stringify(messageBody))
     await handleEvent(message.MessageId, messageBody, logger)
-  } catch (error) {
-    handleProcessingError(error, message, logger)
+  } catch (err) {
+    handleProcessingError(err, message, logger)
   }
 }
