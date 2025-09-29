@@ -45,11 +45,8 @@ describe('SQS message processor', () => {
         'Invalid message format'
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error processing message'),
-        expect.objectContaining({
-          message,
-          error: expect.any(String)
-        })
+        expect.any(Error),
+        'Error processing message'
       )
     })
 
@@ -64,11 +61,8 @@ describe('SQS message processor', () => {
         'Error processing SQS message'
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error processing message'),
-        expect.objectContaining({
-          message,
-          error: expect.any(String)
-        })
+        expect.any(Error),
+        'Error processing message'
       )
     })
   })
@@ -140,9 +134,10 @@ describe('SQS message processor', () => {
         mockLogger
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'Failed to generate agreement SFI123456789-1 PDF. Error: Error: PDF generation failed'
-        )
+        expect.objectContaining({
+          message: 'PDF generation failed'
+        }),
+        'Failed to generate agreement SFI123456789-1 PDF from URL https://example.com/agreement/SFI123456789'
       )
     })
 

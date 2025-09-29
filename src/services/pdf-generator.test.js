@@ -334,7 +334,10 @@ describe('pdf-generator', () => {
 
       // Should log error
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error generating PDF test-nav-error.pdf: Error: Navigation failed'
+        expect.objectContaining({
+          message: 'Navigation failed'
+        }),
+        'Error generating PDF test-nav-error.pdf'
       )
     })
 
@@ -355,7 +358,10 @@ describe('pdf-generator', () => {
       ).rejects.toThrow('Form submission failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error generating PDF test-form-error.pdf: Error: Form submission failed'
+        expect.objectContaining({
+          message: 'Form submission failed'
+        }),
+        'Error generating PDF test-form-error.pdf'
       )
     })
 
@@ -374,7 +380,10 @@ describe('pdf-generator', () => {
       ).rejects.toThrow('PDF generation failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error generating PDF test-pdf-error.pdf: Error: PDF generation failed'
+        expect.objectContaining({
+          message: 'PDF generation failed'
+        }),
+        'Error generating PDF test-pdf-error.pdf'
       )
     })
 
@@ -395,7 +404,10 @@ describe('pdf-generator', () => {
       ).rejects.toThrow('Navigation timeout')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error generating PDF test-timeout.pdf: Error: Navigation timeout'
+        expect.objectContaining({
+          message: 'Navigation timeout'
+        }),
+        'Error generating PDF test-timeout.pdf'
       )
     })
 
@@ -418,7 +430,10 @@ describe('pdf-generator', () => {
 
       // Verify error was logged
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error generating PDF test-cleanup.pdf: Error: Early error'
+        expect.objectContaining({
+          message: 'Early error'
+        }),
+        'Error generating PDF test-cleanup.pdf'
       )
     })
 
@@ -439,10 +454,16 @@ describe('pdf-generator', () => {
 
       // Should log both the main error and the browser close error
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error generating PDF test-close-error.pdf: Error: Navigation failed'
+        expect.objectContaining({
+          message: 'Navigation failed'
+        }),
+        'Error generating PDF test-close-error.pdf'
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Error closing browser: Error: Close failed'
+        expect.objectContaining({
+          message: 'Close failed'
+        }),
+        'Error closing browser'
       )
     })
   })

@@ -57,7 +57,7 @@ async function upload(filePath, key, logger) {
       location: `s3://${bucket}/${key}`
     }
   } catch (error) {
-    logger.error(`Error uploading PDF ${filePath} to S3: ${error.message}`)
+    logger.error(error, `Error uploading PDF ${filePath} to S3`)
     throw error
   }
 }
@@ -95,10 +95,8 @@ export async function uploadPdf(
     }
 
     return uploadResult
-  } catch (error) {
-    logger.error(
-      `Error in PDF ${filename} generation and upload process: ${error.message}`
-    )
-    throw error
+  } catch (err) {
+    logger.error(err, `Error in PDF ${filename} generation and upload process`)
+    throw err
   }
 }

@@ -37,13 +37,8 @@ export const sqsClientPlugin = {
             server.logger.info(
               `Successfully processed message: ${message.MessageId}`
             )
-          } catch (error) {
-            server.logger.error('Failed to process message:', {
-              messageId: message.MessageId,
-              error: error.message,
-              stack: error.stack,
-              data: error.data
-            })
+          } catch (err) {
+            server.logger.error(err, 'Failed to process message')
           }
         },
         sqs: sqsClient,
@@ -56,17 +51,11 @@ export const sqsClientPlugin = {
       })
 
       app.on('error', (err) => {
-        server.logger.error('SQS Consumer error:', {
-          error: err.message,
-          stack: err.stack
-        })
+        server.logger.error(err, 'SQS Consumer error')
       })
 
       app.on('processing_error', (err) => {
-        server.logger.error('SQS Message processing error:', {
-          error: err.message,
-          stack: err.stack
-        })
+        server.logger.error(err, 'SQS Message processing error')
       })
 
       app.on('started', () => {

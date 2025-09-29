@@ -166,10 +166,8 @@ describe('SQS Client', () => {
       await messageHandler(invalidMessage)
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Failed to process message:',
-        expect.objectContaining({
-          messageId: 'msg-1'
-        })
+        expect.any(Error),
+        'Failed to process message'
       )
     })
 
@@ -185,12 +183,7 @@ describe('SQS Client', () => {
       const error = new Error('Consumer error')
       errorHandler(error)
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'SQS Consumer error:',
-        expect.objectContaining({
-          error: error.message
-        })
-      )
+      expect(mockLogger.error).toHaveBeenCalledWith(error, 'SQS Consumer error')
     })
 
     it('should handle processing errors', () => {
@@ -206,10 +199,8 @@ describe('SQS Client', () => {
       errorHandler(error)
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'SQS Message processing error:',
-        expect.objectContaining({
-          error: error.message
-        })
+        error,
+        'SQS Message processing error'
       )
     })
 

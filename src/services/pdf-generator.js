@@ -97,17 +97,17 @@ export async function generatePdf(agreementData, filename, logger) {
     )
 
     return outputPath
-  } catch (error) {
-    logger.error(`Error generating PDF ${filename}: ${error}`)
+  } catch (err) {
+    logger.error(err, `Error generating PDF ${filename}`)
 
     if (browser) {
       try {
         await browser.close()
-      } catch (closeError) {
-        logger.error(`Error closing browser: ${closeError}`)
+      } catch (closeErr) {
+        logger.error(closeErr, `Error closing browser`)
       }
     }
 
-    throw error
+    throw err
   }
 }

@@ -116,7 +116,8 @@ describe('File Upload Service', () => {
       ).rejects.toThrow('Upload failed')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        `Error in PDF ${testFilename} generation and upload process: Upload failed`
+        uploadError,
+        `Error in PDF ${testFilename} generation and upload process`
       )
     })
 
@@ -158,7 +159,10 @@ describe('File Upload Service', () => {
       ).rejects.toThrow('S3 bucket name is not configured')
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        `Error uploading PDF /some/path/agreement-456.pdf to S3: S3 bucket name is not configured`
+        expect.objectContaining({
+          message: 'S3 bucket name is not configured'
+        }),
+        `Error uploading PDF /some/path/agreement-456.pdf to S3`
       )
     })
   })
