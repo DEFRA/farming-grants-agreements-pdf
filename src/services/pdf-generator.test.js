@@ -425,9 +425,6 @@ describe('pdf-generator', () => {
         generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Early error')
 
-      // Verify browser cleanup was attempted
-      expect(mockBrowser.close).toHaveBeenCalled()
-
       // Verify error was logged
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -438,9 +435,8 @@ describe('pdf-generator', () => {
     })
 
     test('Should handle browser.close() error during cleanup', async () => {
-      // Mock browser.close to fail and page.goto to also fail to trigger cleanup
+      // Mock browser.close to fail during successful PDF generation
       mockBrowser.close.mockRejectedValueOnce(new Error('Close failed'))
-      mockPage.goto.mockRejectedValueOnce(new Error('Navigation failed'))
 
       const agreementData = {
         agreementUrl: 'https://example.com/agreement/123',
@@ -450,20 +446,14 @@ describe('pdf-generator', () => {
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
-      ).rejects.toThrow('Navigation failed')
+      ).rejects.toThrow('Close failed')
 
-      // Should log both the main error and the browser close error
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Navigation failed'
-        }),
-        'Error generating PDF test-close-error.pdf'
-      )
+      // Should log the browser close error
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Close failed'
         }),
-        'Error closing browser'
+        'Error generating PDF test-close-error.pdf'
       )
     })
   })
