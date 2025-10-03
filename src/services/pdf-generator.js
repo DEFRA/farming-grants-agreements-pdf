@@ -87,27 +87,17 @@ export async function generatePdf(agreementData, filename, logger) {
       }
     })
 
-    await browser.close()
-    browser = null
-
     await fs.access(outputPath)
 
     logger.info(
       `PDF ${filename} generated successfully and saved to project root ${outputPath}`
     )
 
+    await browser.close()
+
     return outputPath
   } catch (err) {
     logger.error(err, `Error generating PDF ${filename}`)
-
-    if (browser) {
-      try {
-        await browser.close()
-      } catch (closeErr) {
-        logger.error(closeErr, `Error closing browser`)
-      }
-    }
-
     throw err
   }
 }
