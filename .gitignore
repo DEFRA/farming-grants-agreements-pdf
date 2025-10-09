@@ -8,4 +8,5 @@ npm-debug.log
 coverage
 .cache
 .eslintcache
-
+.env
+src/contracts/consumer/pacts
