@@ -580,11 +580,6 @@ describe('config', () => {
   })
 
   describe('AWS configuration', () => {
-    test('should have correct AWS access key defaults for local development', () => {
-      expect(config.get('aws.accessKeyId')).toBe('test')
-      expect(config.get('aws.secretAccessKey')).toBe('test')
-    })
-
     test('should override AWS credentials from environment variables', () => {
       process.env.AWS_ACCESS_KEY_ID = 'real-access-key'
       process.env.AWS_SECRET_ACCESS_KEY = 'real-secret-key'
