@@ -30,23 +30,18 @@ describe('receive an agreement accepted event', () => {
       .withContent({
         specVersion: like('1.0'),
         time: iso8601DateTimeWithMillis('2025-10-06T16:41:59.497Z'),
-        topicArn: like(
-          'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated'
-        ),
-        type: like('io.onsite.agreement.status.updated'),
+        topicArn: 'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
+        type: 'io.onsite.agreement.status.updated',
         data: {
-          agreementNumber: like('SFI123456789'),
-          correlationId: like('mockCorrelationId'),
-          clientRef: like('mockClientRef'),
-          version: like('mockVersion'),
-          agreementUrl: like('http://example.com/mockAgreementUrl'),
-          status: like('accepted'),
+          agreementNumber: 'SFI123456789',
+          correlationId: 'mockCorrelationId',
+          clientRef: 'mockClientRef',
+          version: 'mockVersion',
+          agreementUrl: 'http://example.com/mockAgreementUrl',
+          status: 'accepted',
           date: iso8601DateTimeWithMillis('2025-10-06T16:40:21.951Z'),
-          code: like('mockCode')
+          code: 'mockCode'
         }
-      })
-      .withMetadata({
-        'content-type': 'application/json'
       })
 
       .verify(
