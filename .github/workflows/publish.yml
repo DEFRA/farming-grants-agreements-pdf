@@ -59,6 +59,10 @@ jobs:
         run: npm ci
 
       - name: Run contract tests
+        env:
+          PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_USER }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_PASS }}
         run: SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
 
       - name: Publish pacts
