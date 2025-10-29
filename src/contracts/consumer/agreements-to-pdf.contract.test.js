@@ -16,10 +16,10 @@ jest.mock('~/src/services/pdf-generator.js')
 jest.mock('~/src/services/file-upload.js')
 
 const messagePact = new MessageConsumerPact({
-  consumer: 'farming-grants-agreements-pdf',
+  provider: 'farming-grants-agreements-api-sns',
+  consumer: 'farming-grants-agreements-pdf-sqs',
   dir: path.resolve(process.cwd(), 'src', 'contracts', 'consumer', 'pacts'),
-  pactfileWriteMode: 'update',
-  provider: 'farming-grants-agreements-api'
+  pactfileWriteMode: 'update'
 })
 
 describe('receive an agreement accepted event', () => {
