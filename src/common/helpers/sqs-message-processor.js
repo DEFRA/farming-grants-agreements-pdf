@@ -11,6 +11,7 @@ import { uploadPdf } from '../../services/file-upload.js'
 const generateAndUploadPdf = async (data, logger) => {
   const agreementNumber = data.agreementNumber
   const version = data.version
+  const endDate = data.endDate
 
   // version is currently hardcoded until the version is passed from the API service
   const filename = `${agreementNumber}-${version}.pdf`
@@ -32,7 +33,14 @@ const generateAndUploadPdf = async (data, logger) => {
     return pdfPath
   }
 
-  await uploadPdfToS3(pdfPath, filename, agreementNumber, version, logger)
+  await uploadPdfToS3(
+    pdfPath,
+    filename,
+    agreementNumber,
+    version,
+    endDate,
+    logger
+  )
   return pdfPath
 }
 
@@ -42,6 +50,7 @@ const generateAndUploadPdf = async (data, logger) => {
  * @param {string} filename - The filename for the PDF
  * @param {string} agreementNumber - The agreement number
  * @param {number} version - The agreement version
+ * @param {Date|string} endDate - The agreement end date
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @returns {Promise<void>}
  */
@@ -50,6 +59,7 @@ const uploadPdfToS3 = async (
   filename,
   agreementNumber,
   version,
+  endDate,
   logger
 ) => {
   try {
@@ -58,6 +68,7 @@ const uploadPdfToS3 = async (
       filename,
       agreementNumber,
       version,
+      endDate,
       logger
     )
     logger.info(

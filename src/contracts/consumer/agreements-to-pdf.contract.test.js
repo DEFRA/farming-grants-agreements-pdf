@@ -36,11 +36,12 @@ describe('receive an agreement accepted event', () => {
           agreementNumber: 'SFI123456789',
           correlationId: 'mockCorrelationId',
           clientRef: 'mockClientRef',
-          version: like(1),
-          agreementUrl: like('http://localhost:3555/SFI123456789'),
+          version: 'mockVersion',
+          agreementUrl: 'http://example.com/mockAgreementUrl',
           status: 'accepted',
           date: iso8601DateTimeWithMillis('2025-10-06T16:40:21.951Z'),
-          code: 'mockCode'
+          code: 'mockCode',
+          endDate: like('2025-09-31')
         }
       })
 
@@ -63,22 +64,24 @@ describe('receive an agreement accepted event', () => {
           expect(mockGeneratePdf).toHaveBeenCalledWith(
             {
               agreementNumber: 'SFI123456789',
-              agreementUrl: 'http://localhost:3555/SFI123456789',
+              agreementUrl: 'http://example.com/mockAgreementUrl',
               clientRef: 'mockClientRef',
               code: 'mockCode',
               correlationId: 'mockCorrelationId',
               date: '2025-10-06T16:40:21.951Z',
               status: 'accepted',
-              version: 1
+              version: 'mockVersion',
+              endDate: '2025-09-31'
             },
-            'SFI123456789-1.pdf',
+            'SFI123456789-mockVersion.pdf',
             mockLogger
           )
           expect(mockUploadPdf).toHaveBeenCalledWith(
             'mockPathToPdf',
-            'SFI123456789-1.pdf',
+            'SFI123456789-mockVersion.pdf',
             'SFI123456789',
-            1,
+            'mockVersion',
+            '2025-09-31',
             mockLogger
           )
           expect(result).toBe('mockPathToPdf')

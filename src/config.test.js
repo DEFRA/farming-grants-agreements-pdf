@@ -610,7 +610,7 @@ describe('config', () => {
         'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated'
       )
       expect(config.get('aws.sns.topic.offerAccepted.type')).toBe(
-        'io.onsite.agreement.agreement.status.updated'
+        'io.onsite.agreement.status.updated'
       )
     })
 

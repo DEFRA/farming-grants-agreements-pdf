@@ -1,5 +1,6 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'node:fs/promises'
+import { differenceInYears } from 'date-fns'
 import { config } from '../config.js'
 
 const s3Client = new S3Client(
@@ -63,11 +64,33 @@ async function upload(filePath, key, logger) {
 }
 
 /**
+ * Calculate retention period prefix based on years from now until agreement end date
+ * @param {Date|string} endDate Agreement end date
+ * @returns {string} S3 prefix for the retention period
+ */
+export function calculateRetentionPeriod(endDate) {
+  const yearsFromNow = differenceInYears(new Date(endDate), new Date())
+
+  // Add 7 years for retention
+  const totalYears = yearsFromNow + 7
+
+  // Return the appropriate S3 prefix based on retention thresholds
+  if (totalYears <= 10) {
+    return config.get('aws.s3.shortTermPrefix')
+  } else if (totalYears <= 15) {
+    return config.get('aws.s3.mediumTermPrefix')
+  } else {
+    return config.get('aws.s3.longTermPrefix')
+  }
+}
+
+/**
  * Upload PDF to S3 and cleanup local file
  * @param {string} pdfPath Local path to the PDF file
  * @param {string} filename filename for the PDF file
  * @param {string} agreementNumber Farming agreement document number
  * @param {string} version Farming agreement document version
+ * @param {Date|string} endDate Agreement end date
  * @param {Logger} logger Logger instance
  * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
  */
@@ -76,10 +99,11 @@ export async function uploadPdf(
   filename,
   agreementNumber,
   version,
+  endDate,
   logger
 ) {
   try {
-    const prefix = 'agreements'
+    const prefix = calculateRetentionPeriod(endDate)
     const key = [prefix, agreementNumber, version, filename]
       .filter(Boolean)
       .join('/')

@@ -79,6 +79,24 @@ const config = convict({
         default: 'farming-grants-agreements-pdf-bucket',
         env: 'S3_BUCKET'
       },
+      shortTermPrefix: {
+        doc: 'S3 key prefix for agreements with 10-year retention period',
+        format: String,
+        default: 'agreements_10',
+        env: 'FILES_S3_SHORT_TERM_PREFIX'
+      },
+      mediumTermPrefix: {
+        doc: 'S3 key prefix for agreements with 15-year retention period',
+        format: String,
+        default: 'agreements_15',
+        env: 'FILES_S3_MEDIUM_TERM_PREFIX'
+      },
+      longTermPrefix: {
+        doc: 'S3 key prefix for agreements with 20-year retention period',
+        format: String,
+        default: 'agreements_20',
+        env: 'FILES_S3_LONG_TERM_PREFIX'
+      },
       endpoint: {
         doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Localstack.',
         format: String,
@@ -112,13 +130,13 @@ const config = convict({
             format: String,
             default:
               'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
-            env: 'SNS_TOPIC_ARN_OFFER_ACCEPTED'
+            env: 'SNS_TOPIC_ARN'
           },
           type: {
             doc: 'AWS SNS Topic type for Offer Accepted events',
             format: String,
-            default: 'io.onsite.agreement.agreement.status.updated',
-            env: 'SNS_TOPIC_TYPE_OFFER_ACCEPTED'
+            default: 'io.onsite.agreement.status.updated',
+            env: 'SNS_TOPIC_TYPE'
           }
         }
       }
