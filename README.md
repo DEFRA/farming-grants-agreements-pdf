@@ -1,11 +1,15 @@
 # farming-grants-agreements-pdf
 
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_farming-grants-agreements-pdf&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=DEFRA_farming-grants-agreements-pdf)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_farming-grants-agreements-pdf&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_farming-grants-agreements-pdf)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_farming-grants-agreements-pdf&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_farming-grants-agreements-pdf)
+
 Core delivery platform Node.js Backend Template.
 
-- [Architecture](#requirements)
+- [Architecture](#architecture)
 - [Requirements](#requirements)
   - [Node.js](#nodejs)
-- [Local development](#local-development)
+- [Local Development](#local-development)
   - [Setup](#setup)
   - [Development](#development)
   - [Testing](#testing)
@@ -18,6 +22,7 @@ Core delivery platform Node.js Backend Template.
   - [Development image](#development-image)
   - [Production image](#production-image)
   - [Docker Compose](#docker-compose)
+  - [Viewing messages in LocalStack SQS](#viewing-messages-in-localstack-sqs)
   - [Dependabot](#dependabot)
   - [SonarCloud](#sonarcloud)
 - [Licence](#licence)
@@ -31,8 +36,8 @@ Core delivery platform Node.js Backend Template.
 
 ### Node.js
 
-Please install [Node.js](http://nodejs.org/) `>= v22` and [npm](https://nodejs.org/) `>= v11`. You will find it
-easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
+Please install [Node.js](http://nodejs.org/) `>= v22` and [npm](https://nodejs.org/) `>= v9`. You will find it
+Easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
 
 To use the correct version of Node.js for this application, via nvm:
 
@@ -41,7 +46,7 @@ cd farming-grants-agreements-pdf
 nvm use
 ```
 
-## Local development
+## Local Development
 
 ### Setup
 
@@ -77,7 +82,7 @@ npm start
 
 ### Npm scripts
 
-All available Npm scripts can be seen in [package.json](./package.json).
+All available Npm scripts can be seen in [package.json](./package.json)
 To view them in your command line run:
 
 ```bash
@@ -109,6 +114,10 @@ git config --global core.autocrlf false
 
 ### Development image
 
+> [!TIP]
+> For Apple Silicon users, you may need to add `--platform linux/amd64` to the `docker run` command to ensure
+> compatibility fEx: `docker build --platform=linux/arm64 --no-cache --tag farming-grants-agreements-pdf`
+
 Build:
 
 ```bash
@@ -118,7 +127,7 @@ docker build --target development --no-cache --tag farming-grants-agreements-pdf
 Run:
 
 ```bash
-docker run -e PORT=3001 -p 3001:3001 farming-grants-agreements-pdf:development
+docker run -p 3556:3556 farming-grants-agreements-pdf:development
 ```
 
 ### Production image
@@ -132,7 +141,7 @@ docker build --no-cache --tag farming-grants-agreements-pdf .
 Run:
 
 ```bash
-docker run -e PORT=3001 -p 3001:3001 farming-grants-agreements-pdf
+docker run -p 3556:3556 farming-grants-agreements-pdf
 ```
 
 ### Docker Compose
@@ -142,10 +151,30 @@ A local environment with:
 - Localstack for AWS services (S3, SQS)
 - Redis
 - This service.
-- A commented out frontend example.
 
 ```bash
 docker compose up --build -d
+```
+
+### Viewing messages in LocalStack SQS
+
+By default, our LocalStack monitor only shows message counts (`ApproximateNumberOfMessages`, `ApproximateNumberOfMessagesNotVisible`) for each queue. This is intentional, so we don’t interfere with the application’s consumers — pulling messages removes them from visibility until they are deleted or the visibility timeout expires.
+
+If you want to peek at the actual messages (for debugging or development only), you can run:
+
+```bash
+docker compose exec localstack sh -lc '
+  QURL=$(awslocal sqs get-queue-url \
+    --queue-name create_agreement_pdf \
+    --query QueueUrl --output text)
+
+  awslocal sqs receive-message \
+    --queue-url "$QURL" \
+    --max-number-of-messages 10 \
+    --wait-time-seconds 1 \
+    --message-attribute-names All \
+    --attribute-names All
+'
 ```
 
 ### Dependabot
@@ -155,7 +184,13 @@ the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github
 
 ### SonarCloud
 
-Instructions for setting up SonarCloud can be found in [sonar-project.properties](./sonar-project.properties)
+Instructions for setting up SonarCloud can be found in [sonar-project.properties](./sonar-project.properties).
+
+## API endpoints
+
+| Endpoint       | Description |
+| :------------- | :---------- |
+| `GET: /health` | Health      |
 
 ## Licence
 
