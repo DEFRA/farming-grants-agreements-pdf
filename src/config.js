@@ -154,13 +154,13 @@ const config = convict({
             format: String,
             default:
               'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
-            env: 'SNS_TOPIC_ARN'
+            env: 'SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED'
           },
           type: {
             doc: 'AWS SNS Topic type for Offer Accepted events',
             format: String,
             default: 'io.onsite.agreement.status.updated',
-            env: 'SNS_TOPIC_TYPE'
+            env: 'SNS_TOPIC_TYPE_AGREEMENT_STATUS_UPDATED'
           }
         }
       }
