@@ -25,7 +25,7 @@ const { uploadPdf, calculateRetentionPeriod } = require('./file-upload.js')
 const { PutObjectCommand } = require('@aws-sdk/client-s3')
 const fs = require('fs/promises')
 const { config } = require('../config.js')
-const { addYears } = require('date-fns')
+const { addYears, startOfMonth, addMonths } = require('date-fns')
 
 describe('File Upload Service', () => {
   let mockLogger
@@ -61,63 +61,76 @@ describe('File Upload Service', () => {
   })
 
   describe('calculateRetentionPeriod', () => {
-    test('should return short-term prefix for 1 year from now', () => {
-      const endDate = addYears(new Date(), 1)
+    test('should return short-term prefix for 1 year from start of next month', () => {
+      // Start date is first day of next month
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 1)
       expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
-    test('should return short-term prefix for 2 years from now', () => {
-      const endDate = addYears(new Date(), 2)
+    test('should return short-term prefix for 2 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 2)
       expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
-    test('should return short-term prefix for 3 years from now', () => {
-      const endDate = addYears(new Date(), 3)
+    test('should return short-term prefix for 3 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 3)
       expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
-    test('should return medium-term prefix for 4 years from now', () => {
-      const endDate = addYears(new Date(), 4)
+    test('should return medium-term prefix for 4 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 4)
       expect(calculateRetentionPeriod(endDate)).toBe('extended')
     })
 
-    test('should return medium-term prefix for 5 years from now', () => {
-      const endDate = addYears(new Date(), 5)
+    test('should return medium-term prefix for 5 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 5)
       expect(calculateRetentionPeriod(endDate)).toBe('extended')
     })
 
-    test('should return medium-term prefix for 8 years from now', () => {
-      const endDate = addYears(new Date(), 8)
+    test('should return medium-term prefix for 8 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 8)
       expect(calculateRetentionPeriod(endDate)).toBe('extended')
     })
 
-    test('should return long-term prefix for 9 years from now', () => {
-      const endDate = addYears(new Date(), 9)
+    test('should return long-term prefix for 9 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 9)
       expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
-    test('should return long-term prefix for 10 years from now', () => {
-      const endDate = addYears(new Date(), 10)
+    test('should return long-term prefix for 10 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 10)
       expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
-    test('should return long-term prefix for 15 years from now', () => {
-      const endDate = addYears(new Date(), 15)
+    test('should return long-term prefix for 15 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 15)
       expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
-    test('should return long-term prefix for 20 years from now', () => {
-      const endDate = addYears(new Date(), 20)
+    test('should return long-term prefix for 20 years from start of next month', () => {
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 20)
       expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
     test('should handle Date objects as input', () => {
-      const endDate = addYears(new Date(), 3)
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 3)
       expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
     test('should handle string dates as input', () => {
-      const endDate = addYears(new Date(), 3).toISOString()
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 3).toISOString()
       expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
   })
@@ -125,7 +138,9 @@ describe('File Upload Service', () => {
   describe('uploadPdf', () => {
     const testPdfPath = '/tmp/agreement-123.pdf'
     const testFilename = 'agreement-123.pdf'
-    const testEndDate = addYears(new Date(), 3)
+    // End date should be 3 years from the start of next month
+    const startDate = startOfMonth(addMonths(new Date(), 1))
+    const testEndDate = addYears(startDate, 3)
 
     test('should upload PDF and cleanup local file successfully', async () => {
       const mockUploadResult = {

@@ -1,6 +1,6 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'node:fs/promises'
-import { differenceInYears } from 'date-fns'
+import { differenceInYears, startOfMonth, addMonths } from 'date-fns'
 import { config } from '../config.js'
 
 const s3Client = new S3Client(
@@ -64,16 +64,21 @@ async function upload(filePath, key, logger) {
 }
 
 /**
- * Calculate retention period prefix based on years from now until agreement end date
+ * Calculate retention period prefix based on agreement end date
+ * The start date is always the first day of the next month from now
  * @param {Date|string} endDate Agreement end date
  * @returns {string} S3 prefix for the retention period
  */
 export function calculateRetentionPeriod(endDate) {
-  const yearsFromNow = differenceInYears(new Date(endDate), new Date())
+  // Agreement start date is always the first day of next month
+  const startDate = startOfMonth(addMonths(new Date(), 1))
+
+  // Calculate years from start date to end date
+  const yearsFromStartToEnd = differenceInYears(new Date(endDate), startDate)
 
   // Get base retention years from config
   const baseYears = config.get('aws.s3.retentionBaseYears')
-  const totalYears = yearsFromNow + baseYears
+  const totalYears = yearsFromStartToEnd + baseYears
 
   // Get thresholds from config
   const baseThreshold = config.get('aws.s3.baseTermThreshold')
