@@ -50,7 +50,7 @@ const config = convict({
   jwtSecret: {
     doc: 'JWT Secret',
     format: String,
-    default: 'default-agreements-jwt-secret',
+    default: 'a-string-secret-at-least-256-bits-long',
     env: 'AGREEMENTS_JWT_SECRET'
   },
   aws: {
