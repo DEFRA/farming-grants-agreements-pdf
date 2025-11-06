@@ -71,16 +71,21 @@ async function upload(filePath, key, logger) {
 export function calculateRetentionPeriod(endDate) {
   const yearsFromNow = differenceInYears(new Date(endDate), new Date())
 
-  // Add 7 years for retention
-  const totalYears = yearsFromNow + 7
+  // Get base retention years from config
+  const baseYears = config.get('aws.s3.retentionBaseYears')
+  const totalYears = yearsFromNow + baseYears
+
+  // Get thresholds from config
+  const baseThreshold = config.get('aws.s3.baseTermThreshold')
+  const extendedThreshold = config.get('aws.s3.extendedTermThreshold')
 
   // Return the appropriate S3 prefix based on retention thresholds
-  if (totalYears <= 10) {
-    return config.get('aws.s3.shortTermPrefix')
-  } else if (totalYears <= 15) {
-    return config.get('aws.s3.mediumTermPrefix')
+  if (totalYears <= baseThreshold) {
+    return config.get('aws.s3.baseTermPrefix')
+  } else if (totalYears <= extendedThreshold) {
+    return config.get('aws.s3.extendedTermPrefix')
   } else {
-    return config.get('aws.s3.longTermPrefix')
+    return config.get('aws.s3.maximumTermPrefix')
   }
 }
 

@@ -47,9 +47,13 @@ describe('File Upload Service', () => {
         'aws.accessKeyId': 'test-key',
         'aws.secretAccessKey': 'test-secret',
         'aws.s3.bucket': 'test-bucket',
-        'aws.s3.shortTermPrefix': 'agreements_10',
-        'aws.s3.mediumTermPrefix': 'agreements_15',
-        'aws.s3.longTermPrefix': 'agreements_20',
+        'aws.s3.baseTermPrefix': 'base',
+        'aws.s3.extendedTermPrefix': 'extended',
+        'aws.s3.maximumTermPrefix': 'maximum',
+        'aws.s3.baseTermThreshold': 10,
+        'aws.s3.extendedTermThreshold': 15,
+        'aws.s3.maximumTermThreshold': 20,
+        'aws.s3.retentionBaseYears': 7,
         'aws.s3.endpoint': 'http://localhost:4566'
       }
       return configMap[key]
@@ -59,62 +63,62 @@ describe('File Upload Service', () => {
   describe('calculateRetentionPeriod', () => {
     test('should return short-term prefix for 1 year from now', () => {
       const endDate = addYears(new Date(), 1)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_10')
+      expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
     test('should return short-term prefix for 2 years from now', () => {
       const endDate = addYears(new Date(), 2)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_10')
+      expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
     test('should return short-term prefix for 3 years from now', () => {
       const endDate = addYears(new Date(), 3)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_10')
+      expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
     test('should return medium-term prefix for 4 years from now', () => {
       const endDate = addYears(new Date(), 4)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_15')
+      expect(calculateRetentionPeriod(endDate)).toBe('extended')
     })
 
     test('should return medium-term prefix for 5 years from now', () => {
       const endDate = addYears(new Date(), 5)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_15')
+      expect(calculateRetentionPeriod(endDate)).toBe('extended')
     })
 
     test('should return medium-term prefix for 8 years from now', () => {
       const endDate = addYears(new Date(), 8)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_15')
+      expect(calculateRetentionPeriod(endDate)).toBe('extended')
     })
 
     test('should return long-term prefix for 9 years from now', () => {
       const endDate = addYears(new Date(), 9)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_20')
+      expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
     test('should return long-term prefix for 10 years from now', () => {
       const endDate = addYears(new Date(), 10)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_20')
+      expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
     test('should return long-term prefix for 15 years from now', () => {
       const endDate = addYears(new Date(), 15)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_20')
+      expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
     test('should return long-term prefix for 20 years from now', () => {
       const endDate = addYears(new Date(), 20)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_20')
+      expect(calculateRetentionPeriod(endDate)).toBe('maximum')
     })
 
     test('should handle Date objects as input', () => {
       const endDate = addYears(new Date(), 3)
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_10')
+      expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
 
     test('should handle string dates as input', () => {
       const endDate = addYears(new Date(), 3).toISOString()
-      expect(calculateRetentionPeriod(endDate)).toBe('agreements_10')
+      expect(calculateRetentionPeriod(endDate)).toBe('base')
     })
   })
 
@@ -127,10 +131,9 @@ describe('File Upload Service', () => {
       const mockUploadResult = {
         success: true,
         bucket: 'test-bucket',
-        key: 'agreements_10/agreement-123/1/agreement-123.pdf',
+        key: 'base/agreement-123/1/agreement-123.pdf',
         etag: '"test-etag"',
-        location:
-          's3://test-bucket/agreements_10/agreement-123/1/agreement-123.pdf'
+        location: 's3://test-bucket/base/agreement-123/1/agreement-123.pdf'
       }
 
       // Mock S3 send method to return ETag
@@ -214,7 +217,7 @@ describe('File Upload Service', () => {
 
       expect(PutObjectCommand).toHaveBeenCalledWith(
         expect.objectContaining({
-          Key: 'agreements_10/agreement-456/1/agreement-456.pdf'
+          Key: 'base/agreement-456/1/agreement-456.pdf'
         })
       )
     })
