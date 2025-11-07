@@ -50,7 +50,7 @@ const config = convict({
   jwtSecret: {
     doc: 'JWT Secret',
     format: String,
-    default: 'default-agreements-jwt-secret',
+    default: 'a-string-secret-at-least-256-bits-long',
     env: 'AGREEMENTS_JWT_SECRET'
   },
   aws: {
@@ -78,6 +78,48 @@ const config = convict({
         format: String,
         default: 'farming-grants-agreements-pdf-bucket',
         env: 'S3_BUCKET'
+      },
+      baseTermPrefix: {
+        doc: 'S3 key prefix for base term retention (10 years)',
+        format: String,
+        default: 'base',
+        env: 'FILES_S3_BASE_TERM_PREFIX'
+      },
+      extendedTermPrefix: {
+        doc: 'S3 key prefix for extended term retention (15 years)',
+        format: String,
+        default: 'extended',
+        env: 'FILES_S3_EXTENDED_TERM_PREFIX'
+      },
+      maximumTermPrefix: {
+        doc: 'S3 key prefix for maximum term retention (20 years)',
+        format: String,
+        default: 'maximum',
+        env: 'FILES_S3_MAXIMUM_TERM_PREFIX'
+      },
+      baseTermThreshold: {
+        doc: 'Threshold in years for base term retention period',
+        format: Number,
+        default: 10,
+        env: 'FILES_S3_BASE_TERM_THRESHOLD'
+      },
+      extendedTermThreshold: {
+        doc: 'Threshold in years for extended term retention period',
+        format: Number,
+        default: 15,
+        env: 'FILES_S3_EXTENDED_TERM_THRESHOLD'
+      },
+      maximumTermThreshold: {
+        doc: 'Threshold in years for maximum term retention period',
+        format: Number,
+        default: 20,
+        env: 'FILES_S3_MAXIMUM_TERM_THRESHOLD'
+      },
+      retentionBaseYears: {
+        doc: 'Base number of years added to agreement end date for retention calculation',
+        format: Number,
+        default: 7,
+        env: 'FILES_S3_RETENTION_BASE_YEARS'
       },
       endpoint: {
         doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Localstack.',
@@ -112,13 +154,13 @@ const config = convict({
             format: String,
             default:
               'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
-            env: 'SNS_TOPIC_ARN_OFFER_ACCEPTED'
+            env: 'SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED'
           },
           type: {
             doc: 'AWS SNS Topic type for Offer Accepted events',
             format: String,
-            default: 'io.onsite.agreement.agreement.status.updated',
-            env: 'SNS_TOPIC_TYPE_OFFER_ACCEPTED'
+            default: 'io.onsite.agreement.status.updated',
+            env: 'SNS_TOPIC_TYPE_AGREEMENT_STATUS_UPDATED'
           }
         }
       }

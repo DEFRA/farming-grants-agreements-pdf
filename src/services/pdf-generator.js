@@ -43,9 +43,9 @@ export async function generatePdf(agreementData, filename, logger) {
     const source = 'entra'
     const jwtSecret = config.get('jwtSecret')
     const encryptedAuth = Jwt.token.generate({ source }, jwtSecret)
-    logger.info(
-      `Navigating to agreement URL ${agreementData.agreementUrl} with POST request`
-    )
+
+    logger.info(`Navigating to agreement URL ${agreementData.agreementUrl}`)
+
     await page.goto(agreementData.agreementUrl, {
       waitUntil: 'domcontentloaded'
     })
@@ -56,7 +56,7 @@ export async function generatePdf(agreementData, filename, logger) {
 
     await page.evaluate(() => {
       const form = document.createElement('form')
-      form.method = 'POST'
+      form.method = 'GET'
       form.action = globalThis.location.href
 
       const input = document.createElement('input')

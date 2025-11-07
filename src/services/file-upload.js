@@ -1,5 +1,6 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'node:fs/promises'
+import { differenceInYears, startOfMonth, addMonths } from 'date-fns'
 import { config } from '../config.js'
 
 const s3Client = new S3Client(
@@ -63,11 +64,43 @@ async function upload(filePath, key, logger) {
 }
 
 /**
+ * Calculate retention period prefix based on agreement end date
+ * The start date is always the first day of the next month from now
+ * @param {Date|string} endDate Agreement end date
+ * @returns {string} S3 prefix for the retention period
+ */
+export function calculateRetentionPeriod(endDate) {
+  // Agreement start date is always the first day of next month
+  const startDate = startOfMonth(addMonths(new Date(), 1))
+
+  // Calculate years from start date to end date
+  const yearsFromStartToEnd = differenceInYears(new Date(endDate), startDate)
+
+  // Get base retention years from config
+  const baseYears = config.get('aws.s3.retentionBaseYears')
+  const totalYears = yearsFromStartToEnd + baseYears
+
+  // Get thresholds from config
+  const baseThreshold = config.get('aws.s3.baseTermThreshold')
+  const extendedThreshold = config.get('aws.s3.extendedTermThreshold')
+
+  // Return the appropriate S3 prefix based on retention thresholds
+  if (totalYears <= baseThreshold) {
+    return config.get('aws.s3.baseTermPrefix')
+  } else if (totalYears <= extendedThreshold) {
+    return config.get('aws.s3.extendedTermPrefix')
+  } else {
+    return config.get('aws.s3.maximumTermPrefix')
+  }
+}
+
+/**
  * Upload PDF to S3 and cleanup local file
  * @param {string} pdfPath Local path to the PDF file
  * @param {string} filename filename for the PDF file
  * @param {string} agreementNumber Farming agreement document number
  * @param {string} version Farming agreement document version
+ * @param {Date|string} endDate Agreement end date
  * @param {Logger} logger Logger instance
  * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
  */
@@ -76,10 +109,11 @@ export async function uploadPdf(
   filename,
   agreementNumber,
   version,
+  endDate,
   logger
 ) {
   try {
-    const prefix = 'agreements'
+    const prefix = calculateRetentionPeriod(endDate)
     const key = [prefix, agreementNumber, version, filename]
       .filter(Boolean)
       .join('/')

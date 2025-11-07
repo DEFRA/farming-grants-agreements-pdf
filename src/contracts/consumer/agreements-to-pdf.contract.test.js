@@ -40,7 +40,8 @@ describe('receive an agreement accepted event', () => {
           agreementUrl: like('http://localhost:3555/SFI123456789'),
           status: 'accepted',
           date: iso8601DateTimeWithMillis('2025-10-06T16:40:21.951Z'),
-          code: 'mockCode'
+          code: 'mockCode',
+          endDate: like('2025-09-31')
         }
       })
 
@@ -69,7 +70,8 @@ describe('receive an agreement accepted event', () => {
               correlationId: 'mockCorrelationId',
               date: '2025-10-06T16:40:21.951Z',
               status: 'accepted',
-              version: 1
+              version: 1,
+              endDate: '2025-09-31'
             },
             'SFI123456789-1.pdf',
             mockLogger
@@ -79,6 +81,7 @@ describe('receive an agreement accepted event', () => {
             'SFI123456789-1.pdf',
             'SFI123456789',
             1,
+            '2025-09-31',
             mockLogger
           )
           expect(result).toBe('mockPathToPdf')
