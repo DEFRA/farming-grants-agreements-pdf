@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals'
-import fs from 'fs/promises'
-import path from 'path'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import { generatePdf } from './pdf-generator.js'
 import puppeteer from 'puppeteer'
 
@@ -13,8 +13,8 @@ jest.mock('puppeteer', () => ({
 }))
 
 // Mock fs.access to simulate file existence
-jest.mock('fs/promises', () => ({
-  ...jest.requireActual('fs/promises'),
+jest.mock('node:fs/promises', () => ({
+  ...jest.requireActual('node:fs/promises'),
   access: jest.fn().mockResolvedValue(undefined)
 }))
 

@@ -1,31 +1,35 @@
-// Create a mock S3Client instance
-const mockS3Client = {
-  send: jest.fn()
-}
+import { jest } from '@jest/globals'
+import { addYears, startOfMonth, addMonths } from 'date-fns'
+import * as fsModule from 'node:fs/promises'
+import { uploadPdf, calculateRetentionPeriod } from './file-upload.js'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { config } from '../config.js'
 
-// Mock all dependencies using jest.doMock to ensure they're applied before import
-jest.doMock('@aws-sdk/client-s3', () => ({
-  S3Client: jest.fn(() => mockS3Client),
-  PutObjectCommand: jest.fn()
-}))
+// Mock S3 - define the factory inline so it's hoisted
+jest.mock('@aws-sdk/client-s3', () => {
+  const mockS3Client = {
+    send: jest.fn()
+  }
+  return {
+    S3Client: jest.fn(() => mockS3Client),
+    PutObjectCommand: jest.fn()
+  }
+})
 
-jest.doMock('fs/promises', () => ({
-  readFile: jest.fn(),
-  unlink: jest.fn()
-}))
-
-jest.doMock('../config.js', () => ({
+// Mock config
+jest.mock('../config.js', () => ({
   config: {
     get: jest.fn()
   }
 }))
 
-// Now import everything after mocking
-const { uploadPdf, calculateRetentionPeriod } = require('./file-upload.js')
-const { PutObjectCommand } = require('@aws-sdk/client-s3')
-const fs = require('fs/promises')
-const { config } = require('../config.js')
-const { addYears, startOfMonth, addMonths } = require('date-fns')
+// Get the mocked S3Client instance
+const mockS3Client = S3Client()
+
+// Spy on fs methods
+const mockReadFile = jest.spyOn(fsModule.default, 'readFile')
+const mockUnlink = jest.spyOn(fsModule.default, 'unlink')
+const fs = { readFile: mockReadFile, unlink: mockUnlink }
 
 describe('File Upload Service', () => {
   let mockLogger
