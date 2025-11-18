@@ -78,6 +78,7 @@ describe('SQS message processor', () => {
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
+          status: 'accepted',
           agreementUrl: 'https://example.com/agreement/SFI123456789'
         }
       }
@@ -122,6 +123,7 @@ describe('SQS message processor', () => {
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
+          status: 'accepted',
           agreementUrl: 'https://example.com/agreement/SFI123456789'
         }
       }
@@ -139,6 +141,35 @@ describe('SQS message processor', () => {
         }),
         'Failed to generate agreement SFI123456789-1 PDF from URL https://example.com/agreement/SFI123456789'
       )
+    })
+
+    it('should skip PDF generation when status is not accepted', async () => {
+      const mockPayload = {
+        type: 'agreement.status.updated',
+        data: {
+          agreementNumber: 'SFI123456789',
+          correlationId: 'test-correlation-id',
+          clientRef: 'test-client-ref',
+          frn: 'test-frn',
+          sbi: 'test-sbi',
+          version: 1,
+          status: 'offered',
+          agreementUrl: 'https://example.com/agreement/SFI123456789'
+        }
+      }
+
+      const result = await handleEvent(
+        'aws-message-id',
+        mockPayload,
+        mockLogger
+      )
+
+      expect(result).toBe('')
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Skipping PDF generation for status: offered'
+      )
+      expect(generatePdf).not.toHaveBeenCalled()
+      expect(uploadPdf).not.toHaveBeenCalled()
     })
 
     it('should throw an error for non-offer-accepted events', async () => {

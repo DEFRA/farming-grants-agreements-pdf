@@ -100,6 +100,11 @@ const processOfferAcceptedEvent = async (
     return ''
   }
 
+  if (payload.data.status !== 'accepted') {
+    logger.info(`Skipping PDF generation for status: ${payload.data.status}`)
+    return ''
+  }
+
   return generateAndUploadPdf(payload.data, logger)
 }
 
