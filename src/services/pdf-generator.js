@@ -29,6 +29,7 @@ async function createBrowser(logger) {
  */
 export async function generatePdf(agreementData, filename, logger) {
   let browser = null
+  const outputPath = path.resolve(process.cwd(), filename)
 
   try {
     browser = await createBrowser(logger)
@@ -71,8 +72,6 @@ export async function generatePdf(agreementData, filename, logger) {
 
     await page.waitForNavigation({ waitUntil: 'networkidle0' })
 
-    const outputPath = path.resolve(process.cwd(), filename)
-
     logger.info({ outputPath }, 'Generating PDF')
 
     await page.pdf({
@@ -98,6 +97,17 @@ export async function generatePdf(agreementData, filename, logger) {
     return outputPath
   } catch (err) {
     logger.error(err, `Error generating PDF ${filename}`)
+
+    // Clean up the PDF file if it was created
+    try {
+      await fs.unlink(outputPath)
+      logger.info(`Cleaned up PDF file ${outputPath} after error`)
+    } catch (cleanupErr) {
+      logger.warn(
+        `Failed to cleanup PDF file ${outputPath}: ${cleanupErr.message}`
+      )
+    }
+
     throw err
   }
 }

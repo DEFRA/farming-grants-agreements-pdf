@@ -12,10 +12,11 @@ jest.mock('puppeteer', () => ({
   }
 }))
 
-// Mock fs.access to simulate file existence
+// Mock fs.access and fs.unlink to simulate file operations
 jest.mock('node:fs/promises', () => ({
   ...jest.requireActual('node:fs/promises'),
-  access: jest.fn().mockResolvedValue(undefined)
+  access: jest.fn().mockResolvedValue(undefined),
+  unlink: jest.fn().mockResolvedValue(undefined)
 }))
 
 // Mock @hapi/jwt
@@ -34,7 +35,8 @@ jest.mock('../config.js', () => ({
 
 const mockLogger = {
   info: jest.fn(),
-  error: jest.fn()
+  error: jest.fn(),
+  warn: jest.fn()
 }
 
 // Mock objects for puppeteer
@@ -454,6 +456,72 @@ describe('pdf-generator', () => {
           message: 'Close failed'
         }),
         'Error generating PDF test-close-error.pdf'
+      )
+    })
+  })
+
+  describe('PDF cleanup on errors', () => {
+    test('Should cleanup PDF file when fs.access() fails', async () => {
+      const mockAccess = fs.access
+      // Mock fs.access to fail after PDF is generated
+      mockAccess.mockRejectedValueOnce(new Error('Access failed'))
+
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
+      const filename = 'test-access-error.pdf'
+
+      await expect(
+        generatePdf(agreementData, filename, mockLogger)
+      ).rejects.toThrow('Access failed')
+
+      // Should attempt to cleanup the PDF
+      expect(fs.unlink).toHaveBeenCalled()
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Cleaned up PDF file')
+      )
+    })
+
+    test('Should cleanup PDF file when browser.close() fails', async () => {
+      // Mock browser.close to fail
+      mockBrowser.close.mockRejectedValueOnce(new Error('Close failed'))
+
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
+      const filename = 'test-browser-close-cleanup.pdf'
+
+      await expect(
+        generatePdf(agreementData, filename, mockLogger)
+      ).rejects.toThrow('Close failed')
+
+      // Should attempt to cleanup the PDF
+      expect(fs.unlink).toHaveBeenCalled()
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Cleaned up PDF file')
+      )
+    })
+
+    test('Should cleanup PDF file when PDF generation fails', async () => {
+      // Mock page.pdf to fail
+      mockPage.pdf.mockRejectedValueOnce(new Error('PDF generation failed'))
+
+      const agreementData = {
+        agreementUrl: 'https://example.com/agreement/123',
+        sbi: '123456789'
+      }
+      const filename = 'test-pdf-gen-error.pdf'
+
+      await expect(
+        generatePdf(agreementData, filename, mockLogger)
+      ).rejects.toThrow('PDF generation failed')
+
+      // Should attempt to cleanup the PDF
+      expect(fs.unlink).toHaveBeenCalled()
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Cleaned up PDF file')
       )
     })
   })
