@@ -53,6 +53,12 @@ const config = convict({
     default: 'a-string-secret-at-least-256-bits-long',
     env: 'AGREEMENTS_JWT_SECRET'
   },
+  tmpPdfFolder: {
+    doc: 'Temporary folder for PDF generation',
+    format: String,
+    default: '/tmp/defra-pdf',
+    env: 'TMP_PDF_FOLDER'
+  },
   aws: {
     region: {
       doc: 'AWS region',

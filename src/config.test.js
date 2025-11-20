@@ -86,6 +86,10 @@ describe('config', () => {
     test('should have correct default tracing header', () => {
       expect(config.get('tracing.header')).toBe('x-cdp-request-id')
     })
+
+    test('should have correct default temporary PDF folder', () => {
+      expect(config.get('tmpPdfFolder')).toBe('/tmp/defra-pdf')
+    })
   })
 
   describe('environment variable configuration', () => {

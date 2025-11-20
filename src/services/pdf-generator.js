@@ -30,7 +30,8 @@ async function createBrowser(logger) {
  */
 export async function generatePdf(agreementData, filename, logger) {
   let browser = null
-  const outputPath = path.resolve(process.cwd(), filename)
+  const tmpFolder = config.get('tmpPdfFolder')
+  const outputPath = path.resolve(tmpFolder, filename)
 
   try {
     browser = await createBrowser(logger)
@@ -90,7 +91,7 @@ export async function generatePdf(agreementData, filename, logger) {
     await fs.access(outputPath)
 
     logger.info(
-      `PDF ${filename} generated successfully and saved to project root ${outputPath}`
+      `PDF ${filename} generated successfully and saved to ${outputPath}`
     )
 
     await browser.close()
