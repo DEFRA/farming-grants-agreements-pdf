@@ -3,6 +3,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import * as Jwt from '@hapi/jwt'
 import { config } from '../config.js'
+import { removeTemporaryFile } from '../common/helpers/file-cleanup.js'
 
 async function createBrowser(logger) {
   logger.info('Launching Puppeteer browser')
@@ -99,14 +100,7 @@ export async function generatePdf(agreementData, filename, logger) {
     logger.error(err, `Error generating PDF ${filename}`)
 
     // Clean up the PDF file if it was created
-    try {
-      await fs.unlink(outputPath)
-      logger.info(`Cleaned up PDF file ${outputPath} after error`)
-    } catch (cleanupErr) {
-      logger.warn(
-        `Failed to cleanup PDF file ${outputPath}: ${cleanupErr.message}`
-      )
-    }
+    await removeTemporaryFile(outputPath, logger)
 
     throw err
   }

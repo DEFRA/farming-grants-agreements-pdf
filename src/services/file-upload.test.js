@@ -4,6 +4,12 @@ import * as fsModule from 'node:fs/promises'
 import { uploadPdf, calculateRetentionPeriod } from './file-upload.js'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { config } from '../config.js'
+import { removeTemporaryFile } from '../common/helpers/file-cleanup.js'
+
+// Mock file-cleanup module
+jest.mock('../common/helpers/file-cleanup.js', () => ({
+  removeTemporaryFile: jest.fn().mockResolvedValue(undefined)
+}))
 
 // Mock S3 - define the factory inline so it's hoisted
 jest.mock('@aws-sdk/client-s3', () => {
@@ -28,8 +34,7 @@ const mockS3Client = S3Client()
 
 // Spy on fs methods
 const mockReadFile = jest.spyOn(fsModule.default, 'readFile')
-const mockUnlink = jest.spyOn(fsModule.default, 'unlink')
-const fs = { readFile: mockReadFile, unlink: mockUnlink }
+const fs = { readFile: mockReadFile }
 
 describe('File Upload Service', () => {
   let mockLogger
@@ -159,7 +164,6 @@ describe('File Upload Service', () => {
       const mockS3Result = { ETag: '"test-etag"' }
       mockS3Client.send.mockResolvedValue(mockS3Result)
       fs.readFile.mockResolvedValue(Buffer.from('test content'))
-      fs.unlink.mockResolvedValue()
 
       const result = await uploadPdf(
         testPdfPath,
@@ -171,7 +175,7 @@ describe('File Upload Service', () => {
       )
 
       expect(result).toEqual(mockUploadResult)
-      expect(fs.unlink).toHaveBeenCalledWith(testPdfPath)
+      expect(removeTemporaryFile).toHaveBeenCalledWith(testPdfPath, mockLogger)
     })
 
     test('should handle cleanup error gracefully', async () => {
@@ -180,7 +184,11 @@ describe('File Upload Service', () => {
       fs.readFile.mockResolvedValue(Buffer.from('test content'))
 
       const cleanupError = new Error('Failed to delete file')
-      fs.unlink.mockRejectedValue(cleanupError)
+      removeTemporaryFile.mockImplementationOnce(async (filePath, logger) => {
+        logger.warn(
+          `Failed to cleanup local PDF file ${filePath}: ${cleanupError.message}`
+        )
+      })
 
       const result = await uploadPdf(
         testPdfPath,
@@ -202,28 +210,27 @@ describe('File Upload Service', () => {
       mockS3Client.send.mockRejectedValue(uploadError)
       fs.readFile.mockResolvedValue(Buffer.from('test content'))
 
-      await expect(
-        uploadPdf(
-          testPdfPath,
-          testFilename,
-          'agreement-123',
-          '1',
-          testEndDate,
-          mockLogger
-        )
-      ).rejects.toThrow('Upload failed')
+      const result = await uploadPdf(
+        testPdfPath,
+        testFilename,
+        'agreement-123',
+        '1',
+        testEndDate,
+        mockLogger
+      )
 
+      expect(result).toBeUndefined()
       expect(mockLogger.error).toHaveBeenCalledWith(
         uploadError,
         `Error in PDF ${testFilename} generation and upload process`
       )
+      expect(removeTemporaryFile).toHaveBeenCalledWith(testPdfPath, mockLogger)
     })
 
     test('should generate correct S3 key from filename', async () => {
       const mockResult = { ETag: '"test-etag"' }
       mockS3Client.send.mockResolvedValue(mockResult)
       fs.readFile.mockResolvedValue(Buffer.from('test content'))
-      fs.unlink.mockResolvedValue()
 
       await uploadPdf(
         '/some/path/agreement-456.pdf',
@@ -241,28 +248,31 @@ describe('File Upload Service', () => {
       )
     })
 
-    test('should throw error when bucket is not configured', async () => {
+    test('should handle error when bucket is not configured', async () => {
       config.get.mockImplementation((key) => {
         if (key === 'aws.s3.bucket') return ''
         return 'test-value'
       })
 
-      await expect(
-        uploadPdf(
-          '/some/path/agreement-456.pdf',
-          'agreement-456.pdf',
-          'agreement-456',
-          '1',
-          testEndDate,
-          mockLogger
-        )
-      ).rejects.toThrow('S3 bucket name is not configured')
+      const result = await uploadPdf(
+        '/some/path/agreement-456.pdf',
+        'agreement-456.pdf',
+        'agreement-456',
+        '1',
+        testEndDate,
+        mockLogger
+      )
 
+      expect(result).toBeUndefined()
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'S3 bucket name is not configured'
         }),
         `Error uploading PDF /some/path/agreement-456.pdf to S3`
+      )
+      expect(removeTemporaryFile).toHaveBeenCalledWith(
+        '/some/path/agreement-456.pdf',
+        mockLogger
       )
     })
   })

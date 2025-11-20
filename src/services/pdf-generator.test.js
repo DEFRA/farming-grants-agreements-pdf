@@ -3,6 +3,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { generatePdf } from './pdf-generator.js'
 import puppeteer from 'puppeteer'
+import { removeTemporaryFile } from '../common/helpers/file-cleanup.js'
+
+// Mock file-cleanup module
+jest.mock('../common/helpers/file-cleanup.js', () => ({
+  removeTemporaryFile: jest.fn().mockResolvedValue(undefined)
+}))
 
 // Mock puppeteer before importing the module
 jest.mock('puppeteer', () => ({
@@ -12,11 +18,10 @@ jest.mock('puppeteer', () => ({
   }
 }))
 
-// Mock fs.access and fs.unlink to simulate file operations
+// Mock fs.access to simulate file operations
 jest.mock('node:fs/promises', () => ({
   ...jest.requireActual('node:fs/promises'),
-  access: jest.fn().mockResolvedValue(undefined),
-  unlink: jest.fn().mockResolvedValue(undefined)
+  access: jest.fn().mockResolvedValue(undefined)
 }))
 
 // Mock @hapi/jwt
@@ -471,16 +476,14 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-access-error.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Access failed')
 
-      // Should attempt to cleanup the PDF
-      expect(fs.unlink).toHaveBeenCalled()
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Cleaned up PDF file')
-      )
+      // Should call removeTemporaryFile with the correct path
+      expect(removeTemporaryFile).toHaveBeenCalledWith(expectedPath, mockLogger)
     })
 
     test('Should cleanup PDF file when browser.close() fails', async () => {
@@ -492,16 +495,14 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-browser-close-cleanup.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('Close failed')
 
-      // Should attempt to cleanup the PDF
-      expect(fs.unlink).toHaveBeenCalled()
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Cleaned up PDF file')
-      )
+      // Should call removeTemporaryFile with the correct path
+      expect(removeTemporaryFile).toHaveBeenCalledWith(expectedPath, mockLogger)
     })
 
     test('Should cleanup PDF file when PDF generation fails', async () => {
@@ -513,16 +514,14 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-pdf-gen-error.pdf'
+      const expectedPath = path.resolve(process.cwd(), filename)
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
       ).rejects.toThrow('PDF generation failed')
 
-      // Should attempt to cleanup the PDF
-      expect(fs.unlink).toHaveBeenCalled()
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Cleaned up PDF file')
-      )
+      // Should call removeTemporaryFile with the correct path
+      expect(removeTemporaryFile).toHaveBeenCalledWith(expectedPath, mockLogger)
     })
   })
 })
