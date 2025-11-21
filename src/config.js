@@ -54,6 +54,12 @@ const config = convict({
     default: 'local',
     env: 'ENVIRONMENT'
   },
+  allowedDomains: {
+    doc: 'Allowed domains',
+    format: String,
+    default: 'localhost',
+    env: 'ALLOWED_DOMAINS'
+  },
   jwtSecret: {
     doc: 'JWT Secret',
     format: String,

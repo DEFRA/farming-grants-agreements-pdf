@@ -4,13 +4,30 @@ import { uploadPdf } from '../../services/file-upload.js'
 
 jest.mock('../../services/pdf-generator.js')
 jest.mock('../../services/file-upload.js')
+jest.mock('../../config.js', () => ({
+  config: {
+    get: jest.fn((key) => {
+      switch (key) {
+        case 'allowedDomains':
+          return 'example.com'
+        default:
+          return undefined
+      }
+    })
+  }
+}))
 
 describe('SQS message processor', () => {
   let mockLogger
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockLogger = { info: jest.fn(), error: jest.fn(), debug: jest.fn() }
+    mockLogger = {
+      info: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn()
+    }
     generatePdf.mockResolvedValue('/path/to/generated.pdf')
     uploadPdf.mockResolvedValue({ success: true })
   })
@@ -188,6 +205,35 @@ describe('SQS message processor', () => {
       await expect(
         handleEvent('aws-message-id', mockPayload, mockLogger)
       ).rejects.toThrow('Unrecognized event type')
+    })
+
+    it('should skip PDF generation when URL domain is not allowed', async () => {
+      const mockPayload = {
+        type: 'agreement.status.updated',
+        data: {
+          agreementNumber: 'SFI123456789',
+          correlationId: 'test-correlation-id',
+          clientRef: 'test-client-ref',
+          frn: 'test-frn',
+          sbi: 'test-sbi',
+          version: 1,
+          status: 'accepted',
+          agreementUrl: 'https://bad-domain.com/agreement/SFI123456789'
+        }
+      }
+
+      const result = await handleEvent(
+        'aws-message-id',
+        mockPayload,
+        mockLogger
+      )
+
+      expect(result).toBe('')
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Skipping PDF generation for URL: https://bad-domain.com/agreement/SFI123456789 domain is not on allow list'
+      )
+      expect(generatePdf).not.toHaveBeenCalled()
+      expect(uploadPdf).not.toHaveBeenCalled()
     })
   })
 })
