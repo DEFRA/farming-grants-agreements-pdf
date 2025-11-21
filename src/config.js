@@ -54,6 +54,12 @@ const config = convict({
     default: 'local',
     env: 'ENVIRONMENT'
   },
+  allowedDomains: {
+    doc: 'Allowed domains the PDF service is allowed to make requests to',
+    format: String,
+    default: 'localhost',
+    env: 'ALLOWED_DOMAINS'
+  },
   jwtSecret: {
     doc: 'JWT Secret',
     format: String,

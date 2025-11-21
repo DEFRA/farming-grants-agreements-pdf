@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { generatePdf } from '../../services/pdf-generator.js'
 import { uploadPdf } from '../../services/file-upload.js'
+import { config } from '../../config.js'
 
 /**
  * Generate and upload PDF from agreement URL
@@ -83,6 +84,16 @@ const uploadPdfToS3 = async (
 }
 
 /**
+ * Check if the URL domain is allowed
+ * @param {string} url
+ * @returns {boolean}
+ */
+const isUrlDomainAllowed = (url) => {
+  const domain = new URL(url).hostname
+  return config.get('allowedDomains').includes(domain)
+}
+
+/**
  * Process an offer accepted event
  * @param {string} notificationMessageId - The AWS notification message ID
  * @param {object} payload - The message payload
@@ -102,6 +113,13 @@ const processOfferAcceptedEvent = async (
 
   if (payload.data.status !== 'accepted') {
     logger.info(`Skipping PDF generation for status: ${payload.data.status}`)
+    return ''
+  }
+
+  if (!isUrlDomainAllowed(payload.data.agreementUrl)) {
+    logger.warn(
+      `Skipping PDF generation for URL: ${payload.data.agreementUrl} domain is not on allow list`
+    )
     return ''
   }
 
