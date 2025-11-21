@@ -15,6 +15,21 @@ jobs:
   pr-validator:
     name: Run Pull Request Checks
     runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          SERVICES: s3,sns,sqs
+          DEFAULT_REGION: eu-west-2
+          AWS_DEFAULT_REGION: eu-west-2
+          EDGE_PORT: 4566
+        ports:
+          - 4566:4566
+        options: >-
+          --health-cmd "awslocal s3 ls || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -24,6 +39,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Setup LocalStack S3 Bucket
+        run: |
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://farming-grants-agreements-pdf-bucket --region eu-west-2
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: eu-west-2
       - run: |
           npm ci
           npm run format:check

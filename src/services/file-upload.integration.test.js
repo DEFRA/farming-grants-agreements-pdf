@@ -36,6 +36,12 @@ describe('File Upload Integration Tests', () => {
       const testContent = 'This is a test PDF content'
       const testFilename = 'test-agreement-123.pdf'
       const testFilePath = path.join('/tmp', testFilename)
+      const agreementNumber = 'agreement-123'
+      const version = '1'
+      // Set end date to 3 years from start of next month
+      const { addYears, startOfMonth, addMonths } = await import('date-fns')
+      const startDate = startOfMonth(addMonths(new Date(), 1))
+      const endDate = addYears(startDate, 3)
 
       // Write test content to a temporary file
       await fs.writeFile(testFilePath, testContent)
@@ -45,20 +51,25 @@ describe('File Upload Integration Tests', () => {
         const uploadResult = await uploadPdf(
           testFilePath,
           testFilename,
+          agreementNumber,
+          version,
+          endDate,
           mockLogger
         )
 
         expect(uploadResult.success).toBe(true)
         expect(uploadResult.bucket).toBe(testBucket)
-        expect(uploadResult.key).toBe(`agreements/${testFilename}`)
+        expect(uploadResult.key).toBe(
+          `base/${agreementNumber}/${version}/${testFilename}`
+        )
         expect(uploadResult.location).toBe(
-          `s3://${testBucket}/agreements/${testFilename}`
+          `s3://${testBucket}/base/${agreementNumber}/${version}/${testFilename}`
         )
 
         // Download the file from S3
         const downloadParams = {
           Bucket: testBucket,
-          Key: `agreements/${testFilename}`
+          Key: `base/${agreementNumber}/${version}/${testFilename}`
         }
 
         const getCommand = new GetObjectCommand(downloadParams)
@@ -73,17 +84,11 @@ describe('File Upload Integration Tests', () => {
 
         // Verify logging
         expect(mockLogger.info).toHaveBeenCalledWith(
-          { filename: testFilename },
-          `Starting PDF upload process for ${testFilename}`
+          `Starting PDF upload to S3. key: base/${agreementNumber}/${version}/${testFilename}, filepath: ${testFilePath}`
         )
 
         expect(mockLogger.info).toHaveBeenCalledWith(
-          expect.objectContaining({
-            bucket: testBucket,
-            key: `agreements/${testFilename}`,
-            location: `s3://${testBucket}/agreements/${testFilename}`
-          }),
-          'PDF successfully uploaded to S3'
+          `PDF successfully uploaded to S3. key: base/${agreementNumber}/${version}/${testFilename}, etag: ${uploadResult.etag}, location: s3://${testBucket}/base/${agreementNumber}/${version}/${testFilename}`
         )
       } finally {
         // Clean up: the uploadPdf function should have already deleted the local file

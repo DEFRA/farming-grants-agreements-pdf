@@ -1,10 +1,11 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'node:fs/promises'
-import { differenceInYears, startOfMonth, addMonths } from 'date-fns'
+import { addMonths, differenceInYears, startOfMonth } from 'date-fns'
 import { config } from '../config.js'
+import { removeTemporaryFile } from '../common/helpers/file-cleanup.js'
 
 const s3Client = new S3Client(
-  process.env.NODE_ENV === 'development'
+  process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
     ? {
         region: config.get('aws.region'),
         endpoint: config.get('aws.s3.endpoint'),
@@ -112,25 +113,21 @@ export async function uploadPdf(
   endDate,
   logger
 ) {
+  let uploadResult
+
   try {
     const prefix = calculateRetentionPeriod(endDate)
     const key = [prefix, agreementNumber, version, filename]
       .filter(Boolean)
       .join('/')
 
-    const uploadResult = await upload(pdfPath, key, logger)
-
-    try {
-      await fs.unlink(pdfPath)
-    } catch (cleanupError) {
-      logger.warn(
-        `Failed to cleanup local PDF file ${pdfPath}: ${cleanupError.message}`
-      )
-    }
-
-    return uploadResult
+    uploadResult = await upload(pdfPath, key, logger)
   } catch (err) {
     logger.error(err, `Error in PDF ${filename} generation and upload process`)
-    throw err
+  } finally {
+    // Always cleanup the local PDF file
+    await removeTemporaryFile(pdfPath, logger)
   }
+
+  return uploadResult
 }
