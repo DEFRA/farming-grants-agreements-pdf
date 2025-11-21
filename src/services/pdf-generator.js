@@ -22,6 +22,21 @@ async function createBrowser(logger) {
 }
 
 /**
+ * Ensures the temporary directory exists with secure permissions
+ * @param {string} tmpFolder - Path to the temporary folder
+ * @param {object} logger - Logger instance
+ */
+async function ensureSecureTmpDir(tmpFolder, logger) {
+  try {
+    await fs.access(tmpFolder)
+  } catch {
+    // Directory doesn't exist, create it with restricted permissions (owner only)
+    logger.info(`Creating secure temporary directory: ${tmpFolder}`)
+    await fs.mkdir(tmpFolder, { recursive: true, mode: 0o700 })
+  }
+}
+
+/**
  *
  * @param {string} agreementData The agreement data necessary to generate the PDF
  * @param {string} filename The filename to store the generated PDF
@@ -34,6 +49,9 @@ export async function generatePdf(agreementData, filename, logger) {
   const outputPath = path.resolve(tmpFolder, filename)
 
   try {
+    // Ensure the temporary directory exists with secure permissions
+    await ensureSecureTmpDir(tmpFolder, logger)
+
     browser = await createBrowser(logger)
     const page = await browser.newPage()
 

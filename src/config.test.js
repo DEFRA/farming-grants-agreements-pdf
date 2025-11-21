@@ -88,7 +88,12 @@ describe('config', () => {
     })
 
     test('should have correct default temporary PDF folder', () => {
-      expect(config.get('tmpPdfFolder')).toBe('/tmp/defra-pdf')
+      const tmpFolder = config.get('tmpPdfFolder')
+      const path = require('path')
+      const os = require('os')
+      // Should use OS temp directory joined with defra-pdf
+      expect(tmpFolder).toContain('defra-pdf')
+      expect(tmpFolder).toBe(path.join(os.tmpdir(), 'defra-pdf'))
     })
   })
 

@@ -1,11 +1,18 @@
 import convict from 'convict'
 import convictFormatWithValidator from 'convict-format-with-validator'
+import path from 'node:path'
+import os from 'node:os'
 
 convict.addFormats(convictFormatWithValidator)
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const localstackEndpoint = 'http://localhost:4566'
+
+// Default temporary directory for PDF generation
+// Development: uses os temp directory /tmp/defra-pdf (or OS equivalent)
+// Production: uses /var/tmp/defra-pdf (set via TMP_PDF_FOLDER env var in Dockerfile)
+const secureTmpDir = path.join(os.tmpdir(), 'defra-pdf')
 
 const config = convict({
   serviceVersion: {
@@ -54,9 +61,9 @@ const config = convict({
     env: 'AGREEMENTS_JWT_SECRET'
   },
   tmpPdfFolder: {
-    doc: 'Temporary folder for PDF generation',
+    doc: 'Temporary folder for PDF generation. In production, set TMP_PDF_FOLDER to a secure location with restricted permissions (e.g., /var/tmp/defra-pdf with mode 0700)',
     format: String,
-    default: '/tmp/defra-pdf',
+    default: secureTmpDir,
     env: 'TMP_PDF_FOLDER'
   },
   aws: {

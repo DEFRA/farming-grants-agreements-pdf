@@ -18,10 +18,11 @@ jest.mock('puppeteer', () => ({
   }
 }))
 
-// Mock fs.access to simulate file operations
+// Mock fs operations to simulate file operations
 jest.mock('node:fs/promises', () => ({
   ...jest.requireActual('node:fs/promises'),
-  access: jest.fn().mockResolvedValue(undefined)
+  access: jest.fn().mockResolvedValue(undefined),
+  mkdir: jest.fn().mockResolvedValue(undefined)
 }))
 
 // Mock @hapi/jwt
@@ -469,10 +470,14 @@ describe('pdf-generator', () => {
   })
 
   describe('PDF cleanup on errors', () => {
-    test('Should cleanup PDF file when fs.access() fails', async () => {
+    test('Should cleanup PDF file when fs.mkdir() fails', async () => {
+      const mockMkdir = fs.mkdir
+      // Mock fs.mkdir to fail when trying to create secure directory
+      mockMkdir.mockRejectedValueOnce(new Error('mkdir failed'))
+
+      // Mock fs.access to simulate directory doesn't exist (triggering mkdir call)
       const mockAccess = fs.access
-      // Mock fs.access to fail after PDF is generated
-      mockAccess.mockRejectedValueOnce(new Error('Access failed'))
+      mockAccess.mockRejectedValueOnce(new Error('Directory does not exist'))
 
       const agreementData = {
         agreementUrl: 'https://example.com/agreement/123',
@@ -483,7 +488,7 @@ describe('pdf-generator', () => {
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
-      ).rejects.toThrow('Access failed')
+      ).rejects.toThrow('mkdir failed')
 
       // Should call removeTemporaryFile with the correct path
       expect(removeTemporaryFile).toHaveBeenCalledWith(expectedPath, mockLogger)
