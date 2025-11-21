@@ -86,6 +86,15 @@ describe('config', () => {
     test('should have correct default tracing header', () => {
       expect(config.get('tracing.header')).toBe('x-cdp-request-id')
     })
+
+    test('should have correct default temporary PDF folder', () => {
+      const tmpFolder = config.get('tmpPdfFolder')
+      const path = require('path')
+      const os = require('os')
+      // Should use OS temp directory joined with defra-pdf
+      expect(tmpFolder).toContain('defra-pdf')
+      expect(tmpFolder).toBe(path.join(os.tmpdir(), 'defra-pdf'))
+    })
   })
 
   describe('environment variable configuration', () => {

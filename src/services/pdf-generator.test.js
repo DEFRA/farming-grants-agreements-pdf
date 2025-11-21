@@ -18,10 +18,11 @@ jest.mock('puppeteer', () => ({
   }
 }))
 
-// Mock fs.access to simulate file operations
+// Mock fs operations to simulate file operations
 jest.mock('node:fs/promises', () => ({
   ...jest.requireActual('node:fs/promises'),
-  access: jest.fn().mockResolvedValue(undefined)
+  access: jest.fn().mockResolvedValue(undefined),
+  mkdir: jest.fn().mockResolvedValue(undefined)
 }))
 
 // Mock @hapi/jwt
@@ -34,7 +35,11 @@ jest.mock('@hapi/jwt', () => ({
 // Mock config
 jest.mock('../config.js', () => ({
   config: {
-    get: jest.fn().mockReturnValue('mock-jwt-secret')
+    get: jest.fn().mockImplementation((key) => {
+      if (key === 'tmpPdfFolder') return '/tmp/defra-pdf'
+      if (key === 'jwtSecret') return 'mock-jwt-secret'
+      return 'mock-value'
+    })
   }
 }))
 
@@ -106,7 +111,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-simple.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -148,8 +153,7 @@ describe('pdf-generator', () => {
         'Generating PDF'
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'PDF test-simple.pdf generated successfully and saved to project root ' +
-          expectedPath
+        `PDF test-simple.pdf generated successfully and saved to ${expectedPath}`
       )
     })
 
@@ -159,7 +163,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-complex.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -183,7 +187,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-query-params.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -199,7 +203,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-https.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -215,7 +219,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-post-action.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -263,7 +267,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'agreement-SFI999888777.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -280,7 +284,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-localhost.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -296,7 +300,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-settings.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       const result = await generatePdf(agreementData, filename, mockLogger)
 
@@ -466,21 +470,25 @@ describe('pdf-generator', () => {
   })
 
   describe('PDF cleanup on errors', () => {
-    test('Should cleanup PDF file when fs.access() fails', async () => {
+    test('Should cleanup PDF file when fs.mkdir() fails', async () => {
+      const mockMkdir = fs.mkdir
+      // Mock fs.mkdir to fail when trying to create secure directory
+      mockMkdir.mockRejectedValueOnce(new Error('mkdir failed'))
+
+      // Mock fs.access to simulate directory doesn't exist (triggering mkdir call)
       const mockAccess = fs.access
-      // Mock fs.access to fail after PDF is generated
-      mockAccess.mockRejectedValueOnce(new Error('Access failed'))
+      mockAccess.mockRejectedValueOnce(new Error('Directory does not exist'))
 
       const agreementData = {
         agreementUrl: 'https://example.com/agreement/123',
         sbi: '123456789'
       }
       const filename = 'test-access-error.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
-      ).rejects.toThrow('Access failed')
+      ).rejects.toThrow('mkdir failed')
 
       // Should call removeTemporaryFile with the correct path
       expect(removeTemporaryFile).toHaveBeenCalledWith(expectedPath, mockLogger)
@@ -495,7 +503,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-browser-close-cleanup.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)
@@ -514,7 +522,7 @@ describe('pdf-generator', () => {
         sbi: '123456789'
       }
       const filename = 'test-pdf-gen-error.pdf'
-      const expectedPath = path.resolve(process.cwd(), filename)
+      const expectedPath = path.resolve('/tmp/defra-pdf', filename)
 
       await expect(
         generatePdf(agreementData, filename, mockLogger)

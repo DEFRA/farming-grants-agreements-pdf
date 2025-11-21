@@ -15,6 +15,12 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont
+
+# Create secure temporary directory for PDF generation
+RUN mkdir -p /var/tmp/defra-pdf && \
+    chown node:node /var/tmp/defra-pdf && \
+    chmod 700 /var/tmp/defra-pdf
+
 USER node
 
 ARG PORT
@@ -47,11 +53,20 @@ RUN apk update && apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont
+
+# Create secure temporary directory for PDF generation
+RUN mkdir -p /var/tmp/defra-pdf && \
+    chown node:node /var/tmp/defra-pdf && \
+    chmod 700 /var/tmp/defra-pdf
+
 USER node
 
 # Tell app where Chromium is
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Set secure temporary directory for PDF generation
+ENV TMP_PDF_FOLDER=/var/tmp/defra-pdf
 
 COPY --from=development /home/node/package*.json ./
 COPY --from=development /home/node/src ./src/
