@@ -55,7 +55,7 @@ const config = convict({
     env: 'ENVIRONMENT'
   },
   allowedDomains: {
-    doc: 'Allowed domains',
+    doc: 'Allowed domains the PDF service is allowed to make requests to',
     format: String,
     default: 'localhost',
     env: 'ALLOWED_DOMAINS'
