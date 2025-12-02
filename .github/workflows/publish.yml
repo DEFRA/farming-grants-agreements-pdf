@@ -42,9 +42,14 @@ jobs:
   pact:
     needs: build
     runs-on: self-hosted
-    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name != 'pull_request'
+    if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
+      - name: Mask secrets
+        run: |
+          echo "::add-mask::$PACT_USER"
+          echo "::add-mask::$PACT_PASS"
+
       - name: Checkout code
         uses: actions/checkout@v5
         with:
@@ -56,21 +61,27 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
+      - name: Fetch latest tags
+        run: git fetch --tags --force
+
       - name: Install dependencies
         run: npm ci
 
       - name: Run contract tests
         env:
           PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
-          PACT_BROKER_USERNAME: ${{ secrets.PACT_USER }}
-          PACT_BROKER_PASSWORD: ${{ secrets.PACT_PASS }}
-        run: SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
+          PACT_PUBLISH_VERIFICATION: true
+        run: |
+          export PACT_BROKER_USERNAME="$PACT_USER"
+          export PACT_BROKER_PASSWORD="$PACT_PASS"
+          SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
+
 
       - name: Publish pacts
         env:
           PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
-          PACT_BROKER_USERNAME: ${{ secrets.PACT_USER }}
-          PACT_BROKER_PASSWORD: ${{ secrets.PACT_PASS }}
+          PACT_BROKER_USERNAME: $PACT_USER
+          PACT_BROKER_PASSWORD: $PACT_PASS
         shell: bash
         run: |
           # Use bash to upload pacts manually since Azure Application Gateway blocks /contracts/publish
