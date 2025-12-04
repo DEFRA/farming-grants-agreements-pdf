@@ -8,7 +8,6 @@ on:
 permissions:
   id-token: write
   contents: write
-  pull-requests: write
 
 env:
   AWS_REGION: eu-west-2
@@ -63,7 +62,6 @@ jobs:
   pact:
     needs: build
     runs-on: self-hosted
-    if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
       - name: Mask secrets
