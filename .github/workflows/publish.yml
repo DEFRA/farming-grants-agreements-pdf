@@ -121,11 +121,11 @@ jobs:
               echo "Publishing pact: $consumer -> $provider (version: $version)"
 
               # Upload the pact using curl
-              if curl --silent --fail --request PUT \
+              if curl --silent --show-error --fail --request PUT \
                 --url "$uri" \
                 --user "${PACT_BROKER_USERNAME}:${PACT_BROKER_PASSWORD}" \
                 --header "content-type: application/json" \
-                --data "@${pact_file}" > /dev/null; then
+                --data "@${pact_file}"; then
                 echo "✓ Successfully published pact for $consumer -> $provider"
               else
                 echo "❌ Failed to publish pact for $consumer -> $provider"
