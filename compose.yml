@@ -1,33 +1,25 @@
 services:
   localstack:
     image: localstack/localstack:3.0.2
-    container_name: localstack
+    container_name: farming-grants-agreements-pdf-localstack
     ports:
-      - '4566:4566' # LocalStack Gateway
-      - '4510-4559:4510-4559' # external services port range
+      - '4568:4566' # LocalStack Gateway (PDF)
+      - '4610-4659:4610-4659' # external services port range (PDF)
     env_file:
       - 'compose/aws.env'
     environment:
       DEBUG: ${DEBUG:-1}
       LS_LOG: WARN # Localstack DEBUG Level
-      SERVICES: s3,sqs,sns,firehose
+      SERVICES: s3
       LOCALSTACK_HOST: 127.0.0.1
     volumes:
-      - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
+      - '${TMPDIR:-/tmp}/farming-grants-agreements-pdf-localstack:/var/lib/localstack'
       - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     healthcheck:
       test: ['CMD', 'curl', 'localhost:4566']
       interval: 5s
       start_period: 5s
       retries: 3
-    networks:
-      - cdp-tenant
-
-  redis:
-    image: redis:7.2.3-alpine3.18
-    ports:
-      - '6379:6379'
-    restart: always
     networks:
       - cdp-tenant
 
@@ -42,19 +34,21 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - 'compose/aws.env'
     environment:
       PORT: 3556
       NODE_ENV: development
-      LOCALSTACK_ENDPOINT: http://localstack:4566
-      SQS_ENDPOINT: http://localstack:4566
-      QUEUE_URL: http://localstack:4566/000000000000/create_agreement_pdf
+      LOCALSTACK_ENDPOINT: http://host.docker.internal:4566
+      SQS_ENDPOINT: http://host.docker.internal:4566
+      QUEUE_URL: http://host.docker.internal:4566/000000000000/create_agreement_pdf
       QUEUE_NAME: create_agreement_pdf
-      SNS_ENDPOINT: http://localstack:4566
+      SNS_ENDPOINT: http://host.docker.internal:4566
       SNS_TOPIC_TYPE_AGREEMENT_STATUS_UPDATED: io.onsite.agreement.status.updated
       SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED: arn:aws:sns:eu-west-2:000000000000:agreement_status_updated
-      S3_ENDPOINT: http://localhost:4566
+      S3_ENDPOINT: http://localstack:4566
       S3_BUCKET: farming-grants-agreements-pdf-bucket
       FILES_S3_BASE_TERM_PREFIX: ${FILES_S3_BASE_TERM_PREFIX:-base}
       FILES_S3_EXTENDED_TERM_PREFIX: ${FILES_S3_EXTENDED_TERM_PREFIX:-extended}
@@ -65,6 +59,8 @@ services:
       FILES_S3_RETENTION_BASE_YEARS: ${FILES_S3_RETENTION_BASE_YEARS:-7}
       JWT_ENABLED: ${JWT_ENABLED:-true}
       AGREEMENTS_JWT_SECRET: ${AGREEMENTS_JWT_SECRET:-a-string-secret-at-least-256-bits-long}
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+      TMP_PDF_FOLDER: /var/tmp/defra-pdf
     networks:
       - cdp-tenant
     volumes:
