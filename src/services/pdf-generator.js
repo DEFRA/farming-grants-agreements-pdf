@@ -135,8 +135,8 @@ export async function generatePdf(agreementData, filename, logger) {
     if (browser && !browserClosed) {
       try {
         await browser.close()
-      } catch (closeErr) {
-        logger.error(closeErr, `Error closing browser`)
+      } catch (error) {
+        logger.error(error, `Error closing browser`)
       }
     }
   }

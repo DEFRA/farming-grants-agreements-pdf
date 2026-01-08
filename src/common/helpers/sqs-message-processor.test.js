@@ -92,6 +92,18 @@ describe('SQS message processor', () => {
       }
 
       await processMessage(message, mockLogger)
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Processing message body:',
+        expect.any(String)
+      )
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Processing agreement offer from event')
+      )
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Skipping PDF generation for status:')
+      )
+      expect(mockGeneratePdfFn).not.toHaveBeenCalled()
     })
 
     it('should handle invalid JSON in message body', async () => {
@@ -278,9 +290,18 @@ describe('SQS message processor', () => {
         }
       }
 
-      await expect(
-        handleEvent('aws-message-id', mockPayload, mockLogger)
-      ).rejects.toThrow('Unrecognized event type')
+      let error
+      try {
+        await handleEvent('aws-message-id', mockPayload, mockLogger)
+        expect.fail('Expected error to be thrown')
+      } catch (err) {
+        error = err
+      }
+
+      expect(error).toBeInstanceOf(Error)
+      expect(error.message).toBe('Unrecognized event type')
+      expect(mockGeneratePdfFn).not.toHaveBeenCalled()
+      expect(mockUploadPdfFn).not.toHaveBeenCalled()
     })
 
     it('should skip PDF generation when URL domain is not allowed', async () => {
