@@ -1,8 +1,8 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import fs from 'node:fs/promises'
 import { addMonths, differenceInYears, startOfMonth } from 'date-fns'
-import { config } from '../config.js'
-import { removeTemporaryFile } from '../common/helpers/file-cleanup.js'
+import { config } from '~/src/config.js'
+import { removeTemporaryFile } from '~/src/common/helpers/file-cleanup.js'
 
 const s3Client = new S3Client(
   process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'

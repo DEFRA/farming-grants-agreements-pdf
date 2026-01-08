@@ -2,13 +2,15 @@ import puppeteer from 'puppeteer'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import * as Jwt from '@hapi/jwt'
-import { config } from '../config.js'
-import { removeTemporaryFile } from '../common/helpers/file-cleanup.js'
+import { config } from '~/src/config.js'
+import { removeTemporaryFile } from '~/src/common/helpers/file-cleanup.js'
+
+let browserClosed = false
 
 async function createBrowser(logger) {
   logger.info('Launching Puppeteer browser')
 
-  return puppeteer.launch({
+  const browser = await puppeteer.launch({
     headless: true,
     args: [
       '--no-sandbox',
@@ -19,6 +21,12 @@ async function createBrowser(logger) {
       '--window-size=1920x1080'
     ]
   })
+
+  browser.on('disconnected', () => {
+    browserClosed = true
+  })
+
+  return browser
 }
 
 /**
@@ -75,7 +83,8 @@ export async function generatePdf(agreementData, filename, logger) {
       'x-encrypted-auth': encryptedAuth
     })
 
-    await page.evaluate(() => {
+    // Form submission code - runs in browser context
+    const formSubmissionCode = () => {
       const form = document.createElement('form')
       form.method = 'GET'
       form.action = globalThis.location.href
@@ -88,7 +97,9 @@ export async function generatePdf(agreementData, filename, logger) {
       form.appendChild(input)
       document.body.appendChild(form)
       form.submit()
-    })
+    }
+
+    await page.evaluate(formSubmissionCode)
 
     await page.waitForNavigation({ waitUntil: 'networkidle0' })
 
@@ -112,8 +123,6 @@ export async function generatePdf(agreementData, filename, logger) {
       `PDF ${filename} generated successfully and saved to ${outputPath}`
     )
 
-    await browser.close()
-
     return outputPath
   } catch (err) {
     logger.error(err, `Error generating PDF ${filename}`)
@@ -122,5 +131,13 @@ export async function generatePdf(agreementData, filename, logger) {
     await removeTemporaryFile(outputPath, logger)
 
     throw err
+  } finally {
+    if (browser && !browserClosed) {
+      try {
+        await browser.close()
+      } catch (closeErr) {
+        logger.error(closeErr, `Error closing browser`)
+      }
+    }
   }
 }

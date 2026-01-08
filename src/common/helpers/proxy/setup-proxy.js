@@ -1,8 +1,8 @@
 import { ProxyAgent, setGlobalDispatcher } from 'undici'
 import { bootstrap } from 'global-agent'
 
-import { createLogger } from '../logging/logger.js'
-import { config } from '../../../config.js'
+import { createLogger } from '~/src/common/helpers/logging/logger.js'
+import { config } from '~/src/config.js'
 
 const logger = createLogger()
 

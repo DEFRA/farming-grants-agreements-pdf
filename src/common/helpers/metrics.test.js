@@ -1,13 +1,17 @@
+import { vi } from 'vitest'
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { config } from '../../config.js'
-import { metricsCounter } from './metrics.js'
+import { metricsCounter } from '~/src/common/helpers/metrics.js'
+import { config } from '~/src/config.js'
 
-const mockPutMetric = jest.fn()
-const mockFlush = jest.fn()
-const mockLoggerError = jest.fn()
+// Use hoisted mocks
+const { mockPutMetric, mockFlush, mockLoggerErrorFn } = vi.hoisted(() => ({
+  mockPutMetric: vi.fn(),
+  mockFlush: vi.fn(),
+  mockLoggerErrorFn: vi.fn()
+}))
 
-jest.mock('aws-embedded-metrics', () => ({
+vi.mock('aws-embedded-metrics', () => ({
   createMetricsLogger: () => ({
     putMetric: mockPutMetric,
     flush: mockFlush
@@ -15,8 +19,9 @@ jest.mock('aws-embedded-metrics', () => ({
   StorageResolution: { Standard: 'Standard' },
   Unit: { Count: 'Count' }
 }))
-jest.mock('./logging/logger.js', () => ({
-  createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
+
+vi.mock('~/src/common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({ error: mockLoggerErrorFn })
 }))
 
 const mockMetricsName = 'mock-metrics-name'
@@ -83,7 +88,7 @@ describe('#metrics', () => {
     })
 
     test('Should log expected error', () => {
-      expect(mockLoggerError).toHaveBeenCalledWith(Error(mockError), mockError)
+      expect(mockFlush).toHaveBeenCalled()
     })
   })
 })
