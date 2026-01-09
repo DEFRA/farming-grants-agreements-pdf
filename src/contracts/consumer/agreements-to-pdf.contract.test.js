@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import path from 'node:path'
 
 import {
@@ -7,13 +8,41 @@ import {
 } from '@pact-foundation/pact'
 
 import { handleEvent } from '~/src/common/helpers/sqs-message-processor.js'
-import { generatePdf as mockGeneratePdf } from '~/src/services/pdf-generator.js'
-import { uploadPdf as mockUploadPdf } from '~/src/services/file-upload.js'
+import * as pdfGenerator from '~/src/services/pdf-generator.js'
+import * as fileUpload from '~/src/services/file-upload.js'
 
 const { like, iso8601DateTimeWithMillis } = MatchersV2
 
-jest.mock('~/src/services/pdf-generator.js')
-jest.mock('~/src/services/file-upload.js')
+// Use vi.hoisted() to ensure mock functions are available before mock factories run
+const { mockGeneratePdfFn, mockUploadPdfFn, mockConfigGet } = vi.hoisted(() => {
+  const configFn = vi.fn((key) => {
+    if (key === 'allowedDomains') {
+      return ['localhost', 'example.com']
+    }
+    return undefined
+  })
+  return {
+    mockGeneratePdfFn: vi.fn(),
+    mockUploadPdfFn: vi.fn(),
+    mockConfigGet: configFn
+  }
+})
+
+// Mocks must be declared before imports (they are hoisted by Vitest)
+vi.mock('~/src/services/pdf-generator.js', () => ({
+  generatePdf: mockGeneratePdfFn
+}))
+
+vi.mock('~/src/services/file-upload.js', () => ({
+  uploadPdf: mockUploadPdfFn
+}))
+
+// Mock config module as it's used by sqs-message-processor
+vi.mock('~/src/config.js', () => ({
+  config: {
+    get: mockConfigGet
+  }
+}))
 
 const messagePact = new MessageConsumerPact({
   provider: 'farming-grants-agreements-api-sns',
@@ -48,12 +77,31 @@ describe('receive an agreement accepted event', () => {
       .verify(
         synchronousBodyHandler(async (payload) => {
           const mockLogger = {
-            info: jest.fn(),
-            error: jest.fn()
+            info: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn()
           }
 
-          mockGeneratePdf.mockResolvedValue('mockPathToPdf')
-          mockUploadPdf.mockResolvedValue(true)
+          // Reset and configure mocks before test
+          mockGeneratePdfFn.mockClear()
+          mockUploadPdfFn.mockClear()
+          mockConfigGet.mockClear()
+
+          // Configure mock return values
+          mockConfigGet.mockImplementation((key) => {
+            if (key === 'allowedDomains') {
+              return ['localhost', 'example.com']
+            }
+            return undefined
+          })
+          mockGeneratePdfFn.mockResolvedValue('mockPathToPdf')
+          mockUploadPdfFn.mockResolvedValue(true)
+
+          // Ensure mocks are applied by spying on the actual module exports
+          vi.spyOn(pdfGenerator, 'generatePdf').mockImplementation(
+            mockGeneratePdfFn
+          )
+          vi.spyOn(fileUpload, 'uploadPdf').mockImplementation(mockUploadPdfFn)
 
           const result = await handleEvent(
             'notificationMessageId',
@@ -61,7 +109,7 @@ describe('receive an agreement accepted event', () => {
             mockLogger
           )
 
-          expect(mockGeneratePdf).toHaveBeenCalledWith(
+          expect(mockGeneratePdfFn).toHaveBeenCalledWith(
             {
               agreementNumber: 'SFI123456789',
               agreementUrl: 'http://localhost:3555/SFI123456789',
@@ -76,7 +124,7 @@ describe('receive an agreement accepted event', () => {
             'SFI123456789-1.pdf',
             mockLogger
           )
-          expect(mockUploadPdf).toHaveBeenCalledWith(
+          expect(mockUploadPdfFn).toHaveBeenCalledWith(
             'mockPathToPdf',
             'SFI123456789-1.pdf',
             'SFI123456789',

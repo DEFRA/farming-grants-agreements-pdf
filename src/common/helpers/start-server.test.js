@@ -1,108 +1,198 @@
-import hapi from '@hapi/hapi'
+import { describe, test, expect, vi, beforeEach } from 'vitest'
 
-const mockLoggerInfo = jest.fn()
-const mockLoggerWarn = jest.fn()
-const mockLoggerError = jest.fn()
+import { startServer } from '~/src/common/helpers/start-server.js'
+import { config } from '~/src/config.js'
 
-const mockHapiLoggerInfo = jest.fn()
-const mockHapiLoggerWarn = jest.fn()
-const mockHapiLoggerError = jest.fn()
-
-jest.mock('hapi-pino', () => ({
-  register: (server) => {
-    server.decorate('server', 'logger', {
-      info: mockHapiLoggerInfo,
-      warn: mockHapiLoggerWarn,
-      error: mockHapiLoggerError
-    })
-  },
-  name: 'mock-hapi-pino'
-}))
-jest.mock('../helpers/logging/logger.js', () => ({
-  createLogger: () => ({
-    info: (...args) => mockLoggerInfo(...args),
-    warn: (...args) => mockLoggerWarn(...args),
-    error: (...args) => mockLoggerError(...args)
-  })
+// Mock config at the top level using hoisted
+const { mockConfigGetFn } = vi.hoisted(() => ({
+  mockConfigGetFn: vi.fn().mockReturnValue(3000)
 }))
 
-describe('#startServer', () => {
-  const PROCESS_ENV = process.env
-  let createServerSpy
-  let hapiServerSpy
-  let startServerImport
-  let createServerImport
+vi.mock('~/src/config.js', () => ({
+  config: {
+    get: mockConfigGetFn
+  }
+}))
 
-  beforeAll(async () => {
-    process.env = { ...PROCESS_ENV }
-    process.env.PORT = '3098' // Set to obscure port to avoid conflicts
+describe('startServer', () => {
+  let mockCreateServerFn
+  let mockServerStartFn
+  let mockServerLogger
+  let mockCreateLoggerFn
+  let mockLoggerInfoFn
+  let mockLoggerErrorFn
 
-    createServerImport = await import('../../server.js')
-    startServerImport = await import('./start-server.js')
+  beforeEach(() => {
+    vi.clearAllMocks()
 
-    createServerSpy = jest.spyOn(createServerImport, 'createServer')
-    hapiServerSpy = jest.spyOn(hapi, 'server')
+    // Setup server logger mock
+    mockServerLogger = {
+      info: vi.fn(),
+      error: vi.fn()
+    }
+
+    // Setup server mock
+    mockServerStartFn = vi.fn().mockResolvedValue(undefined)
+    const mockServer = {
+      start: mockServerStartFn,
+      logger: mockServerLogger
+    }
+
+    // Setup createServer mock
+    mockCreateServerFn = vi.fn().mockResolvedValue(mockServer)
+
+    // Setup logger mock
+    const mockLogger = {
+      info: vi.fn(),
+      error: vi.fn()
+    }
+    mockCreateLoggerFn = vi.fn().mockReturnValue(mockLogger)
+    mockLoggerInfoFn = mockLogger.info
+    mockLoggerErrorFn = mockLogger.error
+
+    // Reset config mock - use spyOn as fallback if mock doesn't work
+    mockConfigGetFn.mockReturnValue(3000)
+    vi.spyOn(config, 'get').mockImplementation(mockConfigGetFn)
   })
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
+  describe('When server starts successfully', () => {
+    test('Should create server with options', async () => {
+      const options = { disableSQS: true, createServerFn: mockCreateServerFn }
+      await startServer(options)
 
-  afterAll(() => {
-    process.env = PROCESS_ENV
-    createServerSpy?.mockRestore()
-    hapiServerSpy?.mockRestore()
-  })
-
-  describe('When server starts', () => {
-    let server
-
-    afterAll(async () => {
-      if (server && server.stop) {
-        await server.stop({ timeout: 0 })
-      }
+      expect(mockCreateServerFn).toHaveBeenCalledWith({ disableSQS: true })
     })
 
-    test('Should start up server as expected', async () => {
-      server = await startServerImport.startServer({ disableSQS: true })
+    test('Should create server with default empty options', async () => {
+      await startServer({ createServerFn: mockCreateServerFn })
 
-      expect(createServerSpy).toHaveBeenCalled()
-      expect(hapiServerSpy).toHaveBeenCalled()
-      expect(mockHapiLoggerInfo).toHaveBeenCalledWith(
-        'Found 0 CA Certs to install'
-      )
-      expect(mockHapiLoggerInfo).toHaveBeenCalledWith(
+      expect(mockCreateServerFn).toHaveBeenCalledWith({})
+    })
+
+    test('Should start the server', async () => {
+      await startServer({ createServerFn: mockCreateServerFn })
+
+      expect(mockServerStartFn).toHaveBeenCalled()
+    })
+
+    test('Should log success messages', async () => {
+      await startServer({ createServerFn: mockCreateServerFn })
+
+      expect(mockServerLogger.info).toHaveBeenCalledWith(
         'Server started successfully'
       )
-      expect(mockHapiLoggerInfo).toHaveBeenCalledWith(
-        'Access your backend on http://localhost:3098'
+      expect(mockServerLogger.info).toHaveBeenCalledWith(
+        expect.stringMatching(/^Access your backend on http:\/\/localhost:\d+$/)
+      )
+    })
+
+    test('Should return the server instance', async () => {
+      const result = await startServer({ createServerFn: mockCreateServerFn })
+
+      expect(result).toBeDefined()
+      expect(result.logger).toBe(mockServerLogger)
+      expect(result.start).toBe(mockServerStartFn)
+    })
+
+    test('Should use port from config', async () => {
+      mockConfigGetFn.mockReturnValue(8080)
+      await startServer({ createServerFn: mockCreateServerFn })
+
+      expect(mockConfigGetFn).toHaveBeenCalledWith('port')
+      expect(mockServerLogger.info).toHaveBeenCalledWith(
+        'Access your backend on http://localhost:8080'
       )
     })
   })
 
-  describe('When server start fails', () => {
+  describe('When server fails to start', () => {
+    const mockError = new Error('Server start failed')
+
     beforeEach(() => {
-      createServerSpy.mockRejectedValue(new Error('Server failed to start'))
+      mockServerStartFn.mockRejectedValueOnce(mockError)
     })
 
-    afterEach(() => {
-      createServerSpy.mockRestore()
-      createServerSpy = jest.spyOn(createServerImport, 'createServer')
-    })
-
-    test('Should log failed startup message', async () => {
-      try {
-        await startServerImport.startServer({ disableSQS: true })
-      } catch (error) {
-        // Expected to throw
-      }
-
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Server failed to start :(')
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Server failed to start'
+    test('Should create logger when error occurs', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
         })
-      )
+      ).rejects.toThrow(mockError)
+
+      expect(mockCreateLoggerFn).toHaveBeenCalled()
+    })
+
+    test('Should log error messages', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
+        })
+      ).rejects.toThrow(mockError)
+
+      expect(mockLoggerInfoFn).toHaveBeenCalledWith('Server failed to start :(')
+      expect(mockLoggerErrorFn).toHaveBeenCalledWith(mockError)
+    })
+
+    test('Should rethrow the error', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
+        })
+      ).rejects.toThrow('Server start failed')
+    })
+
+    test('Should not log success messages on error', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
+        })
+      ).rejects.toThrow(mockError)
+
+      expect(mockServerLogger.info).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('When createServer fails', () => {
+    const mockError = new Error('Failed to create server')
+
+    beforeEach(() => {
+      mockCreateServerFn.mockRejectedValueOnce(mockError)
+    })
+
+    test('Should create logger when error occurs', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
+        })
+      ).rejects.toThrow(mockError)
+
+      expect(mockCreateLoggerFn).toHaveBeenCalled()
+    })
+
+    test('Should log error messages', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
+        })
+      ).rejects.toThrow(mockError)
+
+      expect(mockLoggerInfoFn).toHaveBeenCalledWith('Server failed to start :(')
+      expect(mockLoggerErrorFn).toHaveBeenCalledWith(mockError)
+    })
+
+    test('Should rethrow the error', async () => {
+      await expect(
+        startServer({
+          createServerFn: mockCreateServerFn,
+          createLoggerFn: mockCreateLoggerFn
+        })
+      ).rejects.toThrow('Failed to create server')
     })
   })
 })

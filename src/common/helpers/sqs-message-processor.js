@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
-import { generatePdf } from '../../services/pdf-generator.js'
-import { uploadPdf } from '../../services/file-upload.js'
-import { config } from '../../config.js'
+import { generatePdf } from '~/src/services/pdf-generator.js'
+import { uploadPdf } from '~/src/services/file-upload.js'
+import { config } from '~/src/config.js'
 
 /**
  * Generate and upload PDF from agreement URL

@@ -1,4 +1,5 @@
-import { health } from './health.js'
+import { vi } from 'vitest'
+import { health } from '~/src/routes/health.js'
 
 describe('health route', () => {
   describe('route configuration', () => {
@@ -22,7 +23,7 @@ describe('health route', () => {
     beforeEach(() => {
       mockRequest = {}
       mockH = {
-        response: jest.fn().mockReturnThis()
+        response: vi.fn().mockReturnThis()
       }
     })
 

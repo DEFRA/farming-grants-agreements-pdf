@@ -1,11 +1,17 @@
-import { config } from '../../config.js'
-import { createLogger } from './logging/logger.js'
+import { config } from '~/src/config.js'
+import { createLogger as defaultCreateLogger } from '~/src/common/helpers/logging/logger.js'
 
-import { createServer } from '../../server.js'
+import { createServer as defaultCreateServer } from '~/src/server.js'
 
 async function startServer(options = {}) {
+  const {
+    createServerFn = defaultCreateServer,
+    createLoggerFn = defaultCreateLogger,
+    ...serverOptions
+  } = options
+
   try {
-    const server = await createServer(options)
+    const server = await createServerFn(serverOptions)
     await server.start()
 
     server.logger.info('Server started successfully')
@@ -15,7 +21,7 @@ async function startServer(options = {}) {
 
     return server
   } catch (err) {
-    const logger = createLogger()
+    const logger = createLoggerFn()
     logger.info('Server failed to start :(')
     logger.error(err)
     throw err

@@ -1,24 +1,29 @@
-import { jest } from '@jest/globals'
+import { vi } from 'vitest'
 import * as fsModule from 'node:fs/promises'
-import { removeTemporaryFile } from './file-cleanup.js'
+import { removeTemporaryFile } from '~/src/common/helpers/file-cleanup.js'
 
 // Mock fs/promises
-jest.mock('node:fs/promises', () => ({
-  ...jest.requireActual('node:fs/promises'),
-  default: {
-    unlink: jest.fn()
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      unlink: vi.fn()
+    },
+    unlink: vi.fn()
   }
-}))
+})
 
-const mockUnlink = jest.spyOn(fsModule.default, 'unlink')
+const mockUnlink = vi.spyOn(fsModule.default, 'unlink')
 
 describe('file-cleanup', () => {
   let mockLogger
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     mockLogger = {
-      warn: jest.fn()
+      warn: vi.fn()
     }
     mockUnlink.mockResolvedValue()
   })

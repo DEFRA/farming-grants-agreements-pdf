@@ -1,4 +1,7 @@
-import { config } from './config.js'
+import { vi } from 'vitest'
+import path from 'path'
+import os from 'os'
+import { config } from '~/src/config.js'
 import convict from 'convict'
 import convictFormatWithValidator from 'convict-format-with-validator'
 
@@ -89,8 +92,6 @@ describe('config', () => {
 
     test('should have correct default temporary PDF folder', () => {
       const tmpFolder = config.get('tmpPdfFolder')
-      const path = require('path')
-      const os = require('os')
       // Should use OS temp directory joined with defra-pdf
       expect(tmpFolder).toContain('defra-pdf')
       expect(tmpFolder).toBe(path.join(os.tmpdir(), 'defra-pdf'))
@@ -472,10 +473,10 @@ describe('config', () => {
       process.env.NODE_ENV = 'production'
 
       // Clear the module cache to force re-evaluation
-      jest.resetModules()
+      vi.resetModules()
 
       // Re-import the config module to trigger evaluation with production NODE_ENV
-      const { config: prodConfig } = await import('./config.js')
+      const { config: prodConfig } = await import('~/src/config.js')
 
       // Test that production branches were taken
       expect(prodConfig.get('log.format')).toBe('ecs')
