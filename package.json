@@ -23,7 +23,7 @@
     "start": "NODE_ENV=production node --use-strict .",
     "test": "vitest run --exclude '**/contracts/**' --coverage --reporter=verbose",
     "test:watch": "vitest --exclude '**/contracts/**'",
-    "test:contracts": "vitest run src/contracts"
+    "test:contracts": "vitest run --fileParallelism=false src/contracts"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
