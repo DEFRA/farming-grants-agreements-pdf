@@ -45,8 +45,8 @@ vi.mock('~/src/config.js', () => ({
 }))
 
 const messagePact = new MessageConsumerPact({
-  provider: 'farming-grants-agreements-api-sns',
-  consumer: 'farming-grants-agreements-pdf-sqs',
+  provider: 'farming-grants-agreements-api',
+  consumer: 'farming-grants-agreements-pdf',
   dir: path.resolve(process.cwd(), 'src', 'contracts', 'consumer', 'pacts'),
   pactfileWriteMode: 'update'
 })
