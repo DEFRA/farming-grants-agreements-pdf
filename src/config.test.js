@@ -19,8 +19,27 @@ describe('config', () => {
       expect(config.get('host')).toBe('0.0.0.0')
     })
 
-    test('should have correct default port', () => {
-      expect(config.get('port')).toBe(3001)
+    test('should have correct default port', async () => {
+      // Stub dotenv/config to prevent loading PORT from .env file
+      vi.doMock('dotenv/config', () => ({}))
+
+      // Save and unset PORT to test the default
+      const originalPort = process.env.PORT
+      delete process.env.PORT
+
+      // Reset modules and re-import config to get fresh instance with default
+      vi.resetModules()
+      const { config: testConfig } = await import('~/src/config.js')
+
+      expect(testConfig.get('port')).toBe(3001)
+
+      // Restore original PORT and reset modules to restore original config
+      if (originalPort !== undefined) {
+        process.env.PORT = originalPort
+      }
+      vi.resetModules()
+      // Re-import to restore the original config instance for other tests
+      await import('~/src/config.js')
     })
 
     test('should have correct default service name', () => {

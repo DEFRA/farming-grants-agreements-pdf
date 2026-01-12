@@ -30,7 +30,8 @@ EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node package*.json ./
 RUN npm install
-COPY --chown=node:node ./src ./src
+COPY --chown=node:node . .
+RUN npm run build
 
 # Skip Puppeteer download since we use system Chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=1
@@ -69,7 +70,7 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV TMP_PDF_FOLDER=/var/tmp/defra-pdf
 
 COPY --from=development /home/node/package*.json ./
-COPY --from=development /home/node/src ./src/
+COPY --from=development /home/node/.server ./.server/
 
 RUN npm ci --omit=dev
 
@@ -77,4 +78,4 @@ ARG PORT
 ENV PORT=${PORT}
 EXPOSE ${PORT}
 
-CMD [ "node", "src" ]
+CMD [ "node", "." ]
