@@ -1,0 +1,76 @@
+name: Create release notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to release (e.g. 1.0.0). Leave empty to auto-determine from commits.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Create release with notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: |
+          # Determine which tag to use
+          if [ -n "$RELEASE_TAG" ]; then
+            TAG="$RELEASE_TAG"
+          else
+            # No tag provided - use the most recent tag
+            git fetch --tags --force
+            TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+            if [ -z "$TAG" ]; then
+              echo "Error: No tags found in the repository"
+              exit 1
+            fi
+
+            echo "Using most recent tag: $TAG"
+          fi
+
+          # Verify the tag exists in the repository
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Error: Tag '$TAG' does not exist in the repository"
+            exit 1
+          fi
+
+          # Get the latest GitHub release tag
+          PREVIOUS_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+
+          # Generate release notes from commits since last GitHub release
+          if [ -n "$PREVIOUS_TAG" ]; then
+            if ! git rev-parse "$PREVIOUS_TAG" >/dev/null 2>&1; then
+              echo "Warning: Previous release tag '$PREVIOUS_TAG' does not exist in the repository, using all commits up to $TAG"
+              RELEASE_NOTES=$(git log ${TAG} --pretty=format:"- %s (%h)" --no-merges | head -50)
+            else
+              RELEASE_NOTES=$(git log ${PREVIOUS_TAG}..${TAG} --pretty=format:"- %s (%h)" --no-merges)
+              RELEASE_NOTES=${RELEASE_NOTES:-"No changes since ${PREVIOUS_TAG}"}
+            fi
+          else
+            RELEASE_NOTES=$(git log ${TAG} --pretty=format:"- %s (%h)" --no-merges | head -50)
+          fi
+
+          # Create GitHub release
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --notes "$RELEASE_NOTES" \
+            --target main

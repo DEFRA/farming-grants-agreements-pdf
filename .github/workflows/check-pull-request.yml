@@ -1,6 +1,8 @@
 name: Check Pull Request
 
 on:
+  schedule:
+    - cron: "0 7 * * 1"
   pull_request:
     branches:
       - main
@@ -10,6 +12,7 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+      - edited
 
 jobs:
   pr-validator:
@@ -33,12 +36,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: Test code and Create Test Coverage Reports
+      - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate PR title with commitlint
+        if: github.event_name == 'pull_request'
+        run: echo "${{ github.event.pull_request.title }}" | npx commitlint --verbose
+
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
       - name: Setup LocalStack S3 Bucket
         run: |
           aws --endpoint-url=http://localhost:4566 s3 mb s3://farming-grants-agreements-pdf-bucket --region eu-west-2
@@ -46,8 +63,9 @@ jobs:
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_DEFAULT_REGION: eu-west-2
-      - run: |
-          npm ci
+
+      - name: Test code and Create Test Coverage Reports
+        run: |
           npm run format:check
           npm run lint
           npm test
@@ -84,7 +102,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
           cache: npm
 
       - name: Install dependencies
