@@ -3,30 +3,19 @@ import Hapi from '@hapi/hapi'
 
 import { createServer } from '~/src/server.js'
 import * as setupProxyModule from '~/src/common/helpers/proxy/setup-proxy.js'
-
-// Mock config first
-const { mockConfigGetFn } = vi.hoisted(() => ({
-  mockConfigGetFn: vi.fn()
-}))
-
-vi.mock('~/src/config.js', () => ({
-  config: {
-    get: mockConfigGetFn
-  }
-}))
+import { config } from '~/src/config.js'
 
 describe('createServer', () => {
   let mockServer
   let mockServerRegister
+  let originalPort
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    mockConfigGetFn.mockImplementation((key) => {
-      if (key === 'host') return '0.0.0.0'
-      if (key === 'port') return 3001
-      return undefined
-    })
+    // Save original port and set to expected test value
+    originalPort = config.get('port')
+    config.set('port', 3001)
 
     mockServerRegister = vi.fn().mockResolvedValue(undefined)
     mockServer = {
@@ -38,6 +27,10 @@ describe('createServer', () => {
   })
 
   afterEach(() => {
+    // Restore original port value
+    if (originalPort !== undefined) {
+      config.set('port', originalPort)
+    }
     vi.restoreAllMocks()
   })
 
