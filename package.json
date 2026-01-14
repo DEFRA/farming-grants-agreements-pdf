@@ -27,7 +27,9 @@
     "start": "NODE_ENV=production node --use-strict .",
     "test": "vitest run --exclude '**/contracts/**' --coverage --reporter=verbose",
     "test:watch": "vitest --exclude '**/contracts/**'",
-    "test:contracts": "vitest run --fileParallelism=false src/contracts"
+    "test:contracts": "vitest run --fileParallelism=false src/contracts",
+    "test:contracts:consumer": "vitest run --fileParallelism=false src/contracts/consumer",
+    "test:contracts:provider": "echo 'No provider contract tests to run'"
   },
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
