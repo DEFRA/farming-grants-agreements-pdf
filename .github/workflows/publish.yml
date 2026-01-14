@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    if: github.run_number != 1
+    if: github.run_number != 1 && github.event.repository.fork == false
     name: CDP-build-workflow
     runs-on: ubuntu-latest
     services:
@@ -60,6 +60,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   pact:
+    if: github.event.repository.fork == false
     needs: build
     runs-on: self-hosted
 
@@ -77,7 +78,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
           cache: npm
 
       - name: Fetch latest tags
