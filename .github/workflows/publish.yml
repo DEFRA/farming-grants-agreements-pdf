@@ -94,38 +94,24 @@ jobs:
         run: |
           SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
 
+      - name: Setup Pact Broker CLI
+        uses: pact-foundation/pact-broker-cli@main
+
       - name: Publish consumer pacts
         env:
           PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
         shell: bash
         run: |
-          # Use bash to upload pacts manually since Azure Application Gateway blocks /contracts/publish
+          version=$(git describe --tags --abbrev=0)
+          pact_files=(src/contracts/consumer/pacts/generated/*/*.json)
 
-          # Loop through all pact files
-          for pact_file in src/contracts/consumer/pacts/*.json; do
-            if [[ -f "$pact_file" ]]; then
-              echo "Processing pact file: $pact_file"
+          if [ ${#pact_files[@]} -eq 0 ]; then
+            echo "No pact files found to publish."
+            exit 1
+          fi
 
-              # Extract consumer and provider names using jq
-              consumer=$(jq -r '.consumer.name' "$pact_file")
-              provider=$(jq -r '.provider.name' "$pact_file")
-              version=$(git describe --tags --abbrev=0)
-
-              # Construct the URI
-              uri="${PACT_BROKER_BASE_URL}/pacts/provider/${provider}/consumer/${consumer}/version/${version}"
-
-              echo "Publishing pact: $consumer -> $provider (version: $version)"
-
-              # Upload the pact using curl
-              if curl --fail --silent --show-error --request PUT \
-                  --header "Content-Type: application/json" \
-                  --user "${PACT_USER}:${PACT_PASS}" \
-                  --data "@${pact_file}" \
-                  "$uri"; then
-                echo "✓ Successfully published pact for $consumer -> $provider"
-              else
-                echo "❌ Failed to publish pact for $consumer -> $provider"
-                exit 1
-              fi
-            fi
-          done
+          pact-broker-cli publish --merge \
+            --consumer-app-version "$version" \
+            --broker-username "$PACT_USER" \
+            --broker-password "$PACT_PASS" \
+            "${pact_files[@]}"
