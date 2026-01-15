@@ -12,7 +12,13 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov', 'clover'],
       reportsDirectory: './coverage',
       include: ['src/**/*.js'],
-      exclude: ['node_modules/', '.server', 'index.js', '**/*.test.js']
+      exclude: [
+        'node_modules/',
+        '.server',
+        'index.js',
+        '**/*.test.js',
+        '**test-helper**'
+      ]
     },
     testTimeout: 10000,
     hookTimeout: 10000,

@@ -1,6 +1,4 @@
 import { vi } from 'vitest'
-import path from 'node:path'
-
 import {
   MessageConsumerPact,
   synchronousBodyHandler,
@@ -10,6 +8,7 @@ import {
 import { handleEvent } from '~/src/common/helpers/sqs-message-processor.js'
 import * as pdfGenerator from '~/src/services/pdf-generator.js'
 import * as fileUpload from '~/src/services/file-upload.js'
+import { buildMessagePactConfig } from '~/src/contracts/consumer/pact-test-helpers.js'
 
 const { like, iso8601DateTimeWithMillis } = MatchersV2
 
@@ -44,12 +43,9 @@ vi.mock('~/src/config.js', () => ({
   }
 }))
 
-const messagePact = new MessageConsumerPact({
-  provider: 'farming-grants-agreements-api',
-  consumer: 'farming-grants-agreements-pdf',
-  dir: path.resolve(process.cwd(), 'src', 'contracts', 'consumer', 'pacts'),
-  pactfileWriteMode: 'update'
-})
+const messagePact = new MessageConsumerPact(
+  buildMessagePactConfig(import.meta.url)
+)
 
 describe('receive an agreement accepted event', () => {
   it('creates a PDF from a valid agreement', () => {
