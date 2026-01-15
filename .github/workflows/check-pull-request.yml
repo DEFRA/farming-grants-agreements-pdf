@@ -108,31 +108,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run contract tests
+      - name: Run contract tests on PRs
         env:
           PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
-          PACT_PUBLISH_VERIFICATION: true
-        run: |
-          SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
-
-      - name: Setup Pact Broker CLI
-        uses: pact-foundation/pact-broker-cli@main
-
-      - name: Publish consumer pacts
-        env:
-          PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
+          PACT_PUBLISH_VERIFICATION: false
         shell: bash
         run: |
-          version=$(git describe --tags --abbrev=0)
-          pact_files=(src/contracts/consumer/pacts/generated/*/*.json)
-
-          if [ ${#pact_files[@]} -eq 0 ]; then
-            echo "No pact files found to publish."
-            exit 1
-          fi
-
-          pact-broker-cli publish --merge \
-            --consumer-app-version "$version" \
-            --broker-username "$PACT_USER" \
-            --broker-password "$PACT_PASS" \
-            "${pact_files[@]}"
+          SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
