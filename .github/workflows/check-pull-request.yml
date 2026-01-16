@@ -87,6 +87,8 @@ jobs:
     needs: pr-validator
     runs-on: self-hosted
     if: github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
 
     steps:
       - name: Mask secrets
@@ -110,8 +112,10 @@ jobs:
 
       - name: Run contract tests on PRs
         env:
-          PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
           PACT_PUBLISH_VERIFICATION: false
         shell: bash
         run: |
-          SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
+          SERVICE_VERSION=$(git describe --tags --abbrev=0) \
+          PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-$PACT_USER}" \
+          PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-$PACT_PASS}" \
+          npm run test:contracts

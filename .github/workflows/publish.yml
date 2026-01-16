@@ -63,6 +63,8 @@ jobs:
     if: github.event.repository.fork == false
     needs: build
     runs-on: self-hosted
+    env:
+      PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
 
     steps:
       - name: Mask secrets
@@ -89,17 +91,17 @@ jobs:
 
       - name: Run contract tests
         env:
-          PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
           PACT_PUBLISH_VERIFICATION: true
         run: |
-          SERVICE_VERSION=$(git describe --tags --abbrev=0) npm run test:contracts
+          SERVICE_VERSION=$(git describe --tags --abbrev=0) \
+          PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-$PACT_USER}" \
+          PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-$PACT_PASS}" \
+          npm run test:contracts
 
       - name: Setup Pact Broker CLI
         uses: pact-foundation/pact-broker-cli@main
 
       - name: Publish consumer pacts
-        env:
-          PACT_BROKER_BASE_URL: https://ffc-pact-broker.azure.defra.cloud
         shell: bash
         run: |
           version=$(git describe --tags --abbrev=0)
@@ -110,8 +112,8 @@ jobs:
             exit 1
           fi
 
+          PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-$PACT_USER}" \
+          PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-$PACT_PASS}" \
           pact-broker-cli publish --merge \
             --consumer-app-version "$version" \
-            --broker-username "$PACT_USER" \
-            --broker-password "$PACT_PASS" \
             "${pact_files[@]}"
