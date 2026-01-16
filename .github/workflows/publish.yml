@@ -98,8 +98,10 @@ jobs:
           PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-$PACT_PASS}" \
           npm run test:contracts
 
-      - name: Setup Pact Broker CLI
-        uses: pact-foundation/pact-broker-cli@main
+      - name: Setup Pact CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-standalone/master/install.sh | PACT_CLI_VERSION=v2.5.9 bash
+          echo "PATH=${PATH}:${PWD}/pact/bin/" >> $GITHUB_ENV
 
       - name: Publish consumer pacts
         shell: bash
@@ -114,6 +116,6 @@ jobs:
 
           PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-$PACT_USER}" \
           PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-$PACT_PASS}" \
-          pact-broker-cli publish --merge \
+          pact broker publish --merge \
             --consumer-app-version "$version" \
             "${pact_files[@]}"
