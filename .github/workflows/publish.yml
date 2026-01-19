@@ -106,16 +106,8 @@ jobs:
       - name: Publish consumer pacts
         shell: bash
         run: |
-          version=$(git describe --tags --abbrev=0)
-          pact_files=(src/contracts/consumer/pacts/generated/*/*.json)
-
-          if [ ${#pact_files[@]} -eq 0 ]; then
-            echo "No pact files found to publish."
-            exit 1
-          fi
-
           PACT_BROKER_USERNAME="${PACT_BROKER_USERNAME:-$PACT_USER}" \
           PACT_BROKER_PASSWORD="${PACT_BROKER_PASSWORD:-$PACT_PASS}" \
           pact broker publish --merge \
-            --consumer-app-version "$version" \
-            "${pact_files[@]}"
+            --consumer-app-version "$(git describe --tags --abbrev=0)" \
+            src/contracts/consumer/pacts/generated/*/*.json
