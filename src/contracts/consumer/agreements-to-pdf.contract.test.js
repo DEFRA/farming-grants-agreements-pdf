@@ -58,11 +58,11 @@ describe('receive an agreement accepted event', () => {
         topicArn: 'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
         type: 'io.onsite.agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'mockCorrelationId',
           clientRef: 'mockClientRef',
           version: like(1),
-          agreementUrl: like('http://localhost:3555/SFI123456789'),
+          agreementUrl: like('http://localhost:3555/FPTT123456789'),
           status: 'accepted',
           date: iso8601DateTimeWithMillis('2025-10-06T16:40:21.951Z'),
           code: 'mockCode',
@@ -107,8 +107,8 @@ describe('receive an agreement accepted event', () => {
 
           expect(mockGeneratePdfFn).toHaveBeenCalledWith(
             {
-              agreementNumber: 'SFI123456789',
-              agreementUrl: 'http://localhost:3555/SFI123456789',
+              agreementNumber: 'FPTT123456789',
+              agreementUrl: 'http://localhost:3555/FPTT123456789',
               clientRef: 'mockClientRef',
               code: 'mockCode',
               correlationId: 'mockCorrelationId',
@@ -117,13 +117,13 @@ describe('receive an agreement accepted event', () => {
               version: 1,
               endDate: '2025-09-31'
             },
-            'SFI123456789-1.pdf',
+            'FPTT123456789-1.pdf',
             mockLogger
           )
           expect(mockUploadPdfFn).toHaveBeenCalledWith(
             'mockPathToPdf',
-            'SFI123456789-1.pdf',
-            'SFI123456789',
+            'FPTT123456789-1.pdf',
+            'FPTT123456789',
             1,
             '2025-09-31',
             mockLogger

@@ -144,7 +144,7 @@ const config = convict({
       endpoint: {
         doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Localstack.',
         format: String,
-        default: localstackEndpoint,
+        default: 'http://localhost:4568',
         env: 'S3_ENDPOINT'
       }
     },
