@@ -14,8 +14,8 @@ SQS -- Polls for messages --> CONSUMER
 CONSUMER -- Processes message --> PROCESSOR
 PROCESSOR -- Extracts agreementUrl<br>and agreementNumber --> PDFGEN
 PDFGEN -- Generates PDF --> UPLOAD
-UPLOAD -- Uploads PDF to<br>agreements/ folder --> S3@{ label: "S3 Bucket<br>farming-grants-agreements-pdf-bucket<br>agreements/ folder<br><span style=\"padding-left:\">agreements/SFI123456789-1.pdf</span>" }
-User -- Downloads the Offer Agreement document --> DOWNLOAD["GET /SFI123456789/1/download"] --> API
+UPLOAD -- Uploads PDF to<br>agreements/ folder --> S3@{ label: "S3 Bucket<br>farming-grants-agreements-pdf-bucket<br>agreements/ folder<br><span style=\"padding-left:\">agreements/FPTT123456789-1.pdf</span>" }
+User -- Downloads the Offer Agreement document --> DOWNLOAD["GET /FPTT123456789/1/download"] --> API
 
 subgraph subGraph2["User Downoads Agreement"]
 direction TB

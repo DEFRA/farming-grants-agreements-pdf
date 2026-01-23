@@ -61,7 +61,7 @@ describe('config', () => {
     })
 
     test('should have correct default S3 endpoint', () => {
-      expect(config.get('aws.s3.endpoint')).toBe('http://localhost:4566')
+      expect(config.get('aws.s3.endpoint')).toBe('http://localhost:4568')
     })
 
     test('should have correct default SNS endpoint', () => {

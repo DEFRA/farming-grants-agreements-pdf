@@ -78,12 +78,12 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
-          agreementUrl: 'https://example.com/agreement/SFI123456789'
+          agreementUrl: 'https://example.com/agreement/FPTT123456789'
         }
       }
       const message = {
@@ -142,14 +142,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
           status: 'accepted',
-          agreementUrl: 'https://example.com/agreement/SFI123456789'
+          agreementUrl: 'https://example.com/agreement/FPTT123456789'
         }
       }
 
@@ -180,22 +180,22 @@ describe('SQS message processor', () => {
       // Config mock is working - verify generatePdf was called
       expect(mockGeneratePdfFn).toHaveBeenCalledWith(
         mockPayload.data,
-        'SFI123456789-1.pdf',
+        'FPTT123456789-1.pdf',
         mockLogger
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Generating Agreement SFI123456789-1 PDF from agreement URL https://example.com/agreement/SFI123456789'
+          'Generating Agreement FPTT123456789-1 PDF from agreement URL https://example.com/agreement/FPTT123456789'
         )
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining(
-          'PDF SFI123456789-1.pdf generated successfully and save to /path/to/generated.pdf'
+          'PDF FPTT123456789-1.pdf generated successfully and save to /path/to/generated.pdf'
         )
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Agreement SFI123456789 PDF uploaded successfully (true) to S3'
+          'Agreement FPTT123456789 PDF uploaded successfully (true) to S3'
         )
       )
     })
@@ -207,14 +207,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
           status: 'accepted',
-          agreementUrl: 'https://example.com/agreement/SFI123456789'
+          agreementUrl: 'https://example.com/agreement/FPTT123456789'
         }
       }
 
@@ -237,14 +237,14 @@ describe('SQS message processor', () => {
 
       expect(mockGeneratePdfFn).toHaveBeenCalledWith(
         mockPayload.data,
-        'SFI123456789-1.pdf',
+        'FPTT123456789-1.pdf',
         mockLogger
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'PDF generation failed'
         }),
-        'Failed to generate agreement SFI123456789-1 PDF from URL https://example.com/agreement/SFI123456789'
+        'Failed to generate agreement FPTT123456789-1 PDF from URL https://example.com/agreement/FPTT123456789'
       )
     })
 
@@ -252,14 +252,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
           status: 'offered',
-          agreementUrl: 'https://example.com/agreement/SFI123456789'
+          agreementUrl: 'https://example.com/agreement/FPTT123456789'
         }
       }
 
@@ -281,12 +281,12 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'some-other-event',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
-          agreementUrl: 'https://example.com/agreement/SFI123456789'
+          agreementUrl: 'https://example.com/agreement/FPTT123456789'
         }
       }
 
@@ -308,14 +308,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
           status: 'accepted',
-          agreementUrl: 'https://bad-domain.com/agreement/SFI123456789'
+          agreementUrl: 'https://bad-domain.com/agreement/FPTT123456789'
         }
       }
 
@@ -327,7 +327,7 @@ describe('SQS message processor', () => {
 
       expect(result).toBe('')
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        'Skipping PDF generation for URL: https://bad-domain.com/agreement/SFI123456789 domain is not on allow list'
+        'Skipping PDF generation for URL: https://bad-domain.com/agreement/FPTT123456789 domain is not on allow list'
       )
       expect(mockGeneratePdfFn).not.toHaveBeenCalled()
       expect(mockUploadPdfFn).not.toHaveBeenCalled()
@@ -337,7 +337,7 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
@@ -366,14 +366,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
           status: 'accepted',
-          agreementUrl: 'https://example.com/agreement/SFI123456789',
+          agreementUrl: 'https://example.com/agreement/FPTT123456789',
           endDate: '2027-01-01'
         }
       }
@@ -405,7 +405,7 @@ describe('SQS message processor', () => {
       expect(mockUploadPdfFn).toHaveBeenCalled()
       expect(mockLogger.error).toHaveBeenCalledWith(
         uploadError,
-        'Failed to upload agreement SFI123456789 PDF /path/to/generated.pdf to S3'
+        'Failed to upload agreement FPTT123456789 PDF /path/to/generated.pdf to S3'
       )
       // Should not log success message when upload fails
       const successCalls = mockLogger.info.mock.calls.filter(
@@ -426,14 +426,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 1,
           status: 'accepted',
-          agreementUrl: 'https://example.com/agreement/SFI123456789'
+          agreementUrl: 'https://example.com/agreement/FPTT123456789'
         }
       }
 
@@ -465,7 +465,7 @@ describe('SQS message processor', () => {
       expect(mockUploadPdfFn).not.toHaveBeenCalled()
       expect(mockLogger.error).toHaveBeenCalledWith(
         pdfError,
-        'Failed to generate agreement SFI123456789-1 PDF from URL https://example.com/agreement/SFI123456789'
+        'Failed to generate agreement FPTT123456789-1 PDF from URL https://example.com/agreement/FPTT123456789'
       )
     })
 
@@ -481,14 +481,14 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           correlationId: 'test-correlation-id',
           clientRef: 'test-client-ref',
           frn: 'test-frn',
           sbi: 'test-sbi',
           version: 2,
           status: 'accepted',
-          agreementUrl: 'https://example.com/agreement/SFI123456789',
+          agreementUrl: 'https://example.com/agreement/FPTT123456789',
           endDate: '2027-12-31'
         }
       }
@@ -516,13 +516,13 @@ describe('SQS message processor', () => {
       // Verify the full flow executed
       expect(mockGeneratePdfFn).toHaveBeenCalledWith(
         mockPayload.data,
-        'SFI123456789-2.pdf',
+        'FPTT123456789-2.pdf',
         mockLogger
       )
       expect(mockUploadPdfFn).toHaveBeenCalledWith(
         '/path/to/generated.pdf',
-        'SFI123456789-2.pdf',
-        'SFI123456789',
+        'FPTT123456789-2.pdf',
+        'FPTT123456789',
         2,
         '2027-12-31',
         mockLogger
@@ -545,10 +545,10 @@ describe('SQS message processor', () => {
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
-          agreementNumber: 'SFI123456789',
+          agreementNumber: 'FPTT123456789',
           version: 1,
           status: 'accepted',
-          agreementUrl: 'https://example.com/agreement/SFI123456789',
+          agreementUrl: 'https://example.com/agreement/FPTT123456789',
           endDate: '2027-01-01'
         }
       }
@@ -576,7 +576,7 @@ describe('SQS message processor', () => {
       expect(mockUploadPdfFn).toHaveBeenCalled()
       expect(mockLogger.error).toHaveBeenCalledWith(
         uploadError,
-        'Failed to upload agreement SFI123456789 PDF /path/to/generated.pdf to S3'
+        'Failed to upload agreement FPTT123456789 PDF /path/to/generated.pdf to S3'
       )
       // Should still return the PDF path even if upload fails
       expect(result).toBe('/path/to/generated.pdf')
