@@ -53,7 +53,7 @@ describe('receive an agreement accepted event', () => {
       .given('an agreement offer has been accepted')
       .expectsToReceive('a request with the accepted agreement')
       .withContent({
-        specVersion: like('1.0'),
+        specversion: like('1.0'),
         time: iso8601DateTimeWithMillis('2025-10-06T16:41:59.497Z'),
         topicArn: 'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
         type: 'io.onsite.agreement.status.updated',
