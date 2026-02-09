@@ -12,7 +12,7 @@ import { config } from '~/src/config.js'
 const generateAndUploadPdf = async (data, logger) => {
   const agreementNumber = data.agreementNumber
   const version = data.version
-  const endDate = data.endDate
+  const endDate = data.agreementEndData
 
   // version is currently hardcoded until the version is passed from the API service
   const filename = `${agreementNumber}-${version}.pdf`

@@ -65,9 +65,11 @@ describe('receive an agreement accepted event', () => {
           version: like(1),
           agreementUrl: like('http://localhost:3555/FPTT123456789'),
           status: 'accepted',
-          date: iso8601DateTimeWithMillis('2025-10-06T16:40:21.951Z'),
+          agreementAcceptedDate: iso8601DateTimeWithMillis(
+            '2025-10-06T16:40:21.951Z'
+          ),
           code: 'mockCode',
-          endDate: like('2025-09-31')
+          agreementEndData: like('2025-09-31')
         }
       })
 
@@ -113,10 +115,10 @@ describe('receive an agreement accepted event', () => {
               clientRef: 'mockClientRef',
               code: 'mockCode',
               correlationId: 'mockCorrelationId',
-              date: '2025-10-06T16:40:21.951Z',
+              agreementAcceptedDate: '2025-10-06T16:40:21.951Z',
               status: 'accepted',
               version: 1,
-              endDate: '2025-09-31'
+              agreementEndData: '2025-09-31'
             },
             'FPTT123456789-1.pdf',
             mockLogger
