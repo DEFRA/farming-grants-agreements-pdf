@@ -374,7 +374,7 @@ describe('SQS message processor', () => {
           version: 1,
           status: 'accepted',
           agreementUrl: 'https://example.com/agreement/FPTT123456789',
-          endDate: '2027-01-01'
+          agreementEndData: '2027-01-01'
         }
       }
 
@@ -489,7 +489,7 @@ describe('SQS message processor', () => {
           version: 2,
           status: 'accepted',
           agreementUrl: 'https://example.com/agreement/FPTT123456789',
-          endDate: '2027-12-31'
+          agreementEndData: '2027-12-31'
         }
       }
 
@@ -549,7 +549,7 @@ describe('SQS message processor', () => {
           version: 1,
           status: 'accepted',
           agreementUrl: 'https://example.com/agreement/FPTT123456789',
-          endDate: '2027-01-01'
+          agreementEndData: '2027-01-01'
         }
       }
 
