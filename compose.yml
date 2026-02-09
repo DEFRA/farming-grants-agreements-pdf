@@ -43,11 +43,11 @@ services:
       NODE_ENV: development
       LOCALSTACK_ENDPOINT: http://host.docker.internal:4566
       SQS_ENDPOINT: http://host.docker.internal:4566
-      QUEUE_URL: http://host.docker.internal:4566/000000000000/create_agreement_pdf
-      QUEUE_NAME: create_agreement_pdf
+      QUEUE_URL: http://host.docker.internal:4566/000000000000/create_agreement_pdf_fifo.fifo
+      QUEUE_NAME: create_agreement_pdf_fifo.fifo
       SNS_ENDPOINT: http://host.docker.internal:4566
       SNS_TOPIC_TYPE_AGREEMENT_STATUS_UPDATED: io.onsite.agreement.status.updated
-      SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED: arn:aws:sns:eu-west-2:000000000000:agreement_status_updated
+      SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED: arn:aws:sns:eu-west-2:000000000000:agreement_status_updated_fifo.fifo
       S3_ENDPOINT: http://localstack:4566
       S3_BUCKET: farming-grants-agreements-pdf-bucket
       FILES_S3_BASE_TERM_PREFIX: ${FILES_S3_BASE_TERM_PREFIX:-base}

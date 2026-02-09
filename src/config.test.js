@@ -78,7 +78,7 @@ describe('config', () => {
 
     test('should have correct default SQS queue URL', () => {
       expect(config.get('aws.sqs.queueUrl')).toBe(
-        'http://localhost:4566/000000000000/create_agreement_pdf'
+        'http://localhost:4566/000000000000/create_agreement_pdf_fifo.fifo'
       )
     })
 
@@ -636,7 +636,7 @@ describe('config', () => {
 
     test('should have correct SNS topic configuration', () => {
       expect(config.get('aws.sns.topic.offerAccepted.arn')).toBe(
-        'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated'
+        'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated_fifo.fifo'
       )
       expect(config.get('aws.sns.topic.offerAccepted.type')).toBe(
         'io.onsite.agreement.status.updated'

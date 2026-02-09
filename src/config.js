@@ -173,7 +173,7 @@ const config = convict({
             doc: 'AWS SNS Topic ARN for Offer Accepted events',
             format: String,
             default:
-              'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
+              'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated_fifo.fifo',
             env: 'SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED'
           },
           type: {
@@ -195,7 +195,8 @@ const config = convict({
       queueUrl: {
         doc: 'Queue URL',
         format: String,
-        default: 'http://localhost:4566/000000000000/create_agreement_pdf',
+        default:
+          'http://localhost:4566/000000000000/create_agreement_pdf_fifo.fifo',
         env: 'QUEUE_URL'
       },
       interval: {

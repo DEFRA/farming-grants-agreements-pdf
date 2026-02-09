@@ -165,7 +165,7 @@ If you want to peek at the actual messages (for debugging or development only), 
 ```bash
 docker compose exec localstack sh -lc '
   QURL=$(awslocal sqs get-queue-url \
-    --queue-name create_agreement_pdf \
+    --queue-name create_agreement_pdf_fifo.fifo \
     --query QueueUrl --output text)
 
   awslocal sqs receive-message \
