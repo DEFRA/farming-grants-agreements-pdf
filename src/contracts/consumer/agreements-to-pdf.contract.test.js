@@ -55,7 +55,8 @@ describe('receive an agreement accepted event', () => {
       .withContent({
         specversion: like('1.0'),
         time: iso8601DateTimeWithMillis('2025-10-06T16:41:59.497Z'),
-        topicArn: 'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated',
+        topicArn:
+          'arn:aws:sns:eu-west-2:000000000000:agreement_status_updated_fifo.fifo',
         type: 'io.onsite.agreement.status.updated',
         data: {
           agreementNumber: 'FPTT123456789',

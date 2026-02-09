@@ -9,7 +9,7 @@ end
 
 UI["Grants-UI Service<br>Web Interface"] -- User Accepts Agreement offer --> API["Farming Grants Agreement API"]
 API -- Publishes message with<br>the agreement url --> SNS["SNS Topic<br>agreement_accepted<br>arn:aws:sns:eu-west-2:000000000000:agreement_accepted"]
-SNS -- Forwards message --> SQS["SQS Queue<br>create_agreement_pdf<br>http://localhost:4566/000000000000/create_agreement_pdf"]
+SNS -- Forwards message --> SQS["SQS Queue<br>create_agreement_pdf_fifo.fifo<br>http://localhost:4566/000000000000/create_agreement_pdf_fifo.fifo"]
 SQS -- Polls for messages --> CONSUMER
 CONSUMER -- Processes message --> PROCESSOR
 PROCESSOR -- Extracts agreementUrl<br>and agreementNumber --> PDFGEN
