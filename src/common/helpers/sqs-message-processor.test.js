@@ -1,29 +1,10 @@
 import { vi } from 'vitest'
 
-// Import after mocks are set up
-import {
-  handleEvent,
-  processMessage
-} from '~/src/common/helpers/sqs-message-processor.js'
-
 // Use vi.hoisted() to ensure mock functions are available before mock factories run
-const { mockGeneratePdfFn, mockUploadPdfFn, mockConfigGetFn } = vi.hoisted(
-  () => {
-    const configFn = vi.fn((key) => {
-      switch (key) {
-        case 'allowedDomains':
-          return ['example.com']
-        default:
-          return undefined
-      }
-    })
-    return {
-      mockGeneratePdfFn: vi.fn(),
-      mockUploadPdfFn: vi.fn(),
-      mockConfigGetFn: configFn
-    }
-  }
-)
+const { mockGeneratePdfFn, mockUploadPdfFn } = vi.hoisted(() => ({
+  mockGeneratePdfFn: vi.fn(),
+  mockUploadPdfFn: vi.fn()
+}))
 
 vi.mock('~/src/services/pdf-generator.js', () => ({
   generatePdf: mockGeneratePdfFn
@@ -33,18 +14,16 @@ vi.mock('~/src/services/file-upload.js', () => ({
   uploadPdf: mockUploadPdfFn
 }))
 
-vi.mock('~/src/config.js', () => ({
-  config: {
-    get: mockConfigGetFn
-  }
-}))
-
 describe('SQS message processor', () => {
   let mockLogger
+  let handleEvent
+  let processMessage
 
   beforeEach(() => {
     // Clear call history first
     vi.clearAllMocks()
+
+    process.env.ALLOWED_DOMAINS = 'example.com,test.example.com'
 
     mockLogger = {
       info: vi.fn(),
@@ -53,16 +32,6 @@ describe('SQS message processor', () => {
       warn: vi.fn()
     }
 
-    // Re-apply mock implementations after clearing
-    // Ensure allowedDomains is always returned for domain checks
-    mockConfigGetFn.mockImplementation((key) => {
-      switch (key) {
-        case 'allowedDomains':
-          return ['example.com', 'test.example.com']
-        default:
-          return undefined
-      }
-    })
     mockGeneratePdfFn.mockResolvedValue('/path/to/generated.pdf')
     mockUploadPdfFn.mockResolvedValue({
       success: true,
@@ -71,6 +40,13 @@ describe('SQS message processor', () => {
       etag: 'test-etag',
       location: 's3://test-bucket/test-key'
     })
+  })
+
+  beforeEach(async () => {
+    vi.resetModules()
+    ;({ handleEvent, processMessage } = await import(
+      '~/src/common/helpers/sqs-message-processor.js'
+    ))
   })
 
   describe('processMessage', () => {
@@ -159,25 +135,7 @@ describe('SQS message processor', () => {
         expect.stringContaining('Processing agreement offer from event')
       )
 
-      // Check if config mock is working by checking for domain warnings
-      const warnCalls = mockLogger.warn.mock.calls
-      const domainWarnings = warnCalls.filter(
-        (call) =>
-          call[0] &&
-          typeof call[0] === 'string' &&
-          call[0].includes('domain is not on allow list')
-      )
-
-      // If config mock isn't working (domain warning present), skip generatePdf assertions
-      // This is a known limitation with Vitest ESM mocks - config module is loaded before mock applies
-      if (domainWarnings.length > 0) {
-        // Config mock not applied - verify the warning was logged
-        expect(domainWarnings.length).toBeGreaterThan(0)
-        // Skip remaining assertions as they depend on the mock
-        return
-      }
-
-      // Config mock is working - verify generatePdf was called
+      // Verify generatePdf was called
       expect(mockGeneratePdfFn).toHaveBeenCalledWith(
         mockPayload.data,
         'FPTT123456789-1.pdf',
@@ -220,20 +178,6 @@ describe('SQS message processor', () => {
 
       // Should not throw - PDF generation failure doesn't break agreement creation
       await handleEvent('aws-message-id', mockPayload, mockLogger)
-
-      // Check if config mock is working
-      const warnCalls = mockLogger.warn.mock.calls
-      const domainWarnings = warnCalls.filter(
-        (call) =>
-          call[0] &&
-          typeof call[0] === 'string' &&
-          call[0].includes('domain is not on allow list')
-      )
-
-      // If config mock isn't working, skip generatePdf assertions
-      if (domainWarnings.length > 0) {
-        return
-      }
 
       expect(mockGeneratePdfFn).toHaveBeenCalledWith(
         mockPayload.data,
@@ -384,21 +328,6 @@ describe('SQS message processor', () => {
         mockLogger
       )
 
-      // Check if config mock is working by checking for domain warnings
-      const warnCalls = mockLogger.warn.mock.calls
-      const domainWarnings = warnCalls.filter(
-        (call) =>
-          call[0] &&
-          typeof call[0] === 'string' &&
-          call[0].includes('domain is not on allow list')
-      )
-
-      // If config mock isn't working, skip detailed assertions
-      if (domainWarnings.length > 0) {
-        expect(result).toBe('')
-        return
-      }
-
       // Should return the PDF path even if upload fails (upload errors are caught)
       expect(result).toBe('/path/to/generated.pdf')
       expect(mockGeneratePdfFn).toHaveBeenCalled()
@@ -443,22 +372,6 @@ describe('SQS message processor', () => {
         mockLogger
       )
 
-      // Check if config mock is working by checking for domain warnings
-      const warnCalls = mockLogger.warn.mock.calls
-      const domainWarnings = warnCalls.filter(
-        (call) =>
-          call[0] &&
-          typeof call[0] === 'string' &&
-          call[0].includes('domain is not on allow list')
-      )
-
-      // If config mock isn't working, the domain check will fail and return early
-      if (domainWarnings.length > 0) {
-        expect(result).toBe('')
-        // In this case, generatePdf won't be called due to domain check
-        return
-      }
-
       // Should return empty string when PDF generation fails
       expect(result).toBe('')
       expect(mockGeneratePdfFn).toHaveBeenCalled()
@@ -470,14 +383,6 @@ describe('SQS message processor', () => {
     })
 
     it('should successfully generate and upload PDF with all data fields', async () => {
-      // Ensure config mock returns allowed domain
-      mockConfigGetFn.mockImplementation((key) => {
-        if (key === 'allowedDomains') {
-          return ['example.com', 'test.example.com']
-        }
-        return undefined
-      })
-
       const mockPayload = {
         type: 'agreement.status.updated',
         data: {
@@ -499,20 +404,6 @@ describe('SQS message processor', () => {
         mockLogger
       )
 
-      // Check if config mock worked by looking for domain warnings
-      const warnCalls = mockLogger.warn.mock.calls
-      const domainWarnings = warnCalls.filter(
-        (call) =>
-          call[0] &&
-          typeof call[0] === 'string' &&
-          call[0].includes('domain is not on allow list')
-      )
-
-      if (domainWarnings.length > 0) {
-        // Config mock didn't work, but we still tested the code path
-        return
-      }
-
       // Verify the full flow executed
       expect(mockGeneratePdfFn).toHaveBeenCalledWith(
         mockPayload.data,
@@ -531,14 +422,6 @@ describe('SQS message processor', () => {
     })
 
     it('should handle upload error in uploadPdfToS3', async () => {
-      // Ensure config mock returns allowed domain
-      mockConfigGetFn.mockImplementation((key) => {
-        if (key === 'allowedDomains') {
-          return ['example.com']
-        }
-        return undefined
-      })
-
       const uploadError = new Error('S3 upload error')
       mockUploadPdfFn.mockRejectedValueOnce(uploadError)
 
@@ -558,19 +441,6 @@ describe('SQS message processor', () => {
         mockPayload,
         mockLogger
       )
-
-      // Check if config mock worked
-      const warnCalls = mockLogger.warn.mock.calls
-      const domainWarnings = warnCalls.filter(
-        (call) =>
-          call[0] &&
-          typeof call[0] === 'string' &&
-          call[0].includes('domain is not on allow list')
-      )
-
-      if (domainWarnings.length > 0) {
-        return
-      }
 
       // Verify upload error was handled
       expect(mockUploadPdfFn).toHaveBeenCalled()
