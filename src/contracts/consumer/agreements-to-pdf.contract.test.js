@@ -69,7 +69,7 @@ describe('receive an agreement accepted event', () => {
             '2025-10-06T16:40:21.951Z'
           ),
           code: 'mockCode',
-          agreementEndData: like('2025-09-31')
+          agreementEndDate: like('2025-09-31')
         }
       })
 
@@ -118,7 +118,7 @@ describe('receive an agreement accepted event', () => {
               agreementAcceptedDate: '2025-10-06T16:40:21.951Z',
               status: 'accepted',
               version: 1,
-              agreementEndData: '2025-09-31'
+              agreementEndDate: '2025-09-31'
             },
             'FPTT123456789-1.pdf',
             mockLogger
