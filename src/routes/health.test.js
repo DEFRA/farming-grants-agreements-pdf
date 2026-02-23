@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { health } from '~/src/routes/health.js'
+import { health } from '#~/routes/health.js'
 
 describe('health route', () => {
   describe('route configuration', () => {

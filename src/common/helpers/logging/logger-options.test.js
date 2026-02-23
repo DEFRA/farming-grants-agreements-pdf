@@ -67,7 +67,7 @@ vi.mock('@elastic/ecs-pino-format', () => ({
   ecsFormat: mockEcsFormat
 }))
 
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: mockConfig
 }))
 
@@ -81,11 +81,9 @@ describe('loggerOptions', () => {
 
   beforeAll(async () => {
     // Import the module after mocks are set up
-    const module = await import(
-      '~/src/common/helpers/logging/logger-options.js'
-    )
+    const module = await import('#~/common/helpers/logging/logger-options.js')
     loggerOptions = module.loggerOptions
-    const configModule = await import('~/src/config.js')
+    const configModule = await import('#~/config.js')
     config = configModule.config
   })
 

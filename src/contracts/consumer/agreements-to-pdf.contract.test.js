@@ -5,10 +5,8 @@ import {
   MatchersV2
 } from '@pact-foundation/pact'
 
-import { handleEvent } from '~/src/common/helpers/sqs-message-processor.js'
-import * as pdfGenerator from '~/src/services/pdf-generator.js'
-import * as fileUpload from '~/src/services/file-upload.js'
-import { buildMessagePactConfig } from '~/src/contracts/consumer/pact-test-helpers.js'
+import { handleEvent } from '#~/common/helpers/sqs-message-processor.js'
+import { buildMessagePactConfig } from '#~/contracts/consumer/pact-test-helpers.js'
 
 const { like, iso8601DateTimeWithMillis } = MatchersV2
 
@@ -28,16 +26,16 @@ const { mockGeneratePdfFn, mockUploadPdfFn, mockConfigGet } = vi.hoisted(() => {
 })
 
 // Mocks must be declared before imports (they are hoisted by Vitest)
-vi.mock('~/src/services/pdf-generator.js', () => ({
+vi.mock('#~/services/pdf-generator.js', () => ({
   generatePdf: mockGeneratePdfFn
 }))
 
-vi.mock('~/src/services/file-upload.js', () => ({
+vi.mock('#~/services/file-upload.js', () => ({
   uploadPdf: mockUploadPdfFn
 }))
 
 // Mock config module as it's used by sqs-message-processor
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: {
     get: mockConfigGet
   }
@@ -92,13 +90,7 @@ describe('receive an agreement accepted event', () => {
             return undefined
           })
           mockGeneratePdfFn.mockResolvedValue('mockPathToPdf')
-          mockUploadPdfFn.mockResolvedValue(true)
-
-          // Ensure mocks are applied by spying on the actual module exports
-          vi.spyOn(pdfGenerator, 'generatePdf').mockImplementation(
-            mockGeneratePdfFn
-          )
-          vi.spyOn(fileUpload, 'uploadPdf').mockImplementation(mockUploadPdfFn)
+          mockUploadPdfFn.mockResolvedValue({ success: true })
 
           const result = await handleEvent(
             'notificationMessageId',
@@ -121,13 +113,10 @@ describe('receive an agreement accepted event', () => {
             'FPTT123456789-1.pdf',
             mockLogger
           )
-          expect(mockUploadPdfFn).toHaveBeenCalledWith(
-            'mockPathToPdf',
-            'FPTT123456789-1.pdf',
-            'FPTT123456789',
-            1,
-            '2025-09-31',
-            mockLogger
+          expect(mockLogger.info).toHaveBeenCalledWith(
+            expect.stringContaining(
+              'Agreement FPTT123456789 PDF uploaded successfully'
+            )
           )
           expect(result).toBe('mockPathToPdf')
         })

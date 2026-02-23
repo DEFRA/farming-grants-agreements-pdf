@@ -1,8 +1,8 @@
 import { vi } from 'vitest'
-import { router } from '~/src/plugins/router.js'
+import { router } from '#~/plugins/router.js'
 
 // Mock the health route
-vi.mock('~/src/routes/health.js', () => ({
+vi.mock('#~/routes/health.js', () => ({
   health: {
     method: 'GET',
     path: '/health',

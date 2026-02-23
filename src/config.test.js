@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 import path from 'path'
 import os from 'os'
-import { config } from '~/src/config.js'
+import { config } from '#~/config.js'
 import convict from 'convict'
 import convictFormatWithValidator from 'convict-format-with-validator'
 
@@ -29,7 +29,7 @@ describe('config', () => {
 
       // Reset modules and re-import config to get fresh instance with default
       vi.resetModules()
-      const { config: testConfig } = await import('~/src/config.js')
+      const { config: testConfig } = await import('#~/config.js')
 
       expect(testConfig.get('port')).toBe(3001)
 
@@ -39,7 +39,7 @@ describe('config', () => {
       }
       vi.resetModules()
       // Re-import to restore the original config instance for other tests
-      await import('~/src/config.js')
+      await import('#~/config.js')
     })
 
     test('should have correct default service name', () => {
@@ -495,7 +495,7 @@ describe('config', () => {
       vi.resetModules()
 
       // Re-import the config module to trigger evaluation with production NODE_ENV
-      const { config: prodConfig } = await import('~/src/config.js')
+      const { config: prodConfig } = await import('#~/config.js')
 
       // Test that production branches were taken
       expect(prodConfig.get('log.format')).toBe('ecs')

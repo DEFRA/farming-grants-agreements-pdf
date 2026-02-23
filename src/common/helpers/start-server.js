@@ -1,7 +1,7 @@
-import { config } from '~/src/config.js'
-import { createLogger as defaultCreateLogger } from '~/src/common/helpers/logging/logger.js'
+import { config } from '#~/config.js'
+import { createLogger as defaultCreateLogger } from '#~/common/helpers/logging/logger.js'
 
-import { createServer as defaultCreateServer } from '~/src/server.js'
+import { createServer as defaultCreateServer } from '#~/server.js'
 
 async function startServer(options = {}) {
   const {

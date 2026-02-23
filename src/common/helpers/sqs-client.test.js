@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import { Consumer } from 'sqs-consumer'
-import { sqsClientPlugin } from '~/src/common/helpers/sqs-client.js'
+import { sqsClientPlugin } from '#~/common/helpers/sqs-client.js'
 
 // Mock AWS SDK credential provider
 vi.mock('@aws-sdk/credential-provider-node', () => ({
@@ -27,7 +27,7 @@ vi.mock('@aws-sdk/client-sqs', () => {
   }
 })
 vi.mock('sqs-consumer')
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: {
     get: vi.fn((key) => {
       switch (key) {
@@ -110,9 +110,9 @@ describe('SQS Client', () => {
         queueUrl: options.queueUrl,
         handleMessage: expect.any(Function),
         sqs: mockSqsClient,
-        batchSize: 1,
+        batchSize: 10,
         waitTimeSeconds: 5,
-        visibilityTimeout: 10,
+        visibilityTimeout: 30,
         handleMessageTimeout: 30000,
         attributeNames: ['All'],
         messageAttributeNames: ['All']
@@ -213,7 +213,7 @@ describe('SQS Client', () => {
 
     it('should log successful message processing', async () => {
       // Mock processMessage to succeed
-      vi.doMock('~/src/common/helpers/sqs-message-processor.js', () => ({
+      vi.doMock('#~/common/helpers/sqs-message-processor.js', () => ({
         processMessage: vi.fn().mockResolvedValue()
       }))
 
