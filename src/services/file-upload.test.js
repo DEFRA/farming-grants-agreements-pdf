@@ -1,8 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
-import {
-  uploadPdf,
-  calculateRetentionPeriod
-} from '~/src/services/file-upload.js'
+import { uploadPdf, calculateRetentionPeriod } from '#~/services/file-upload.js'
 
 // Use vi.hoisted() to ensure mock functions are available before mock factories run
 const {
@@ -39,14 +36,14 @@ const {
 })
 
 // Mock file-cleanup module
-vi.mock('~/src/common/helpers/file-cleanup.js', async () => {
+vi.mock('#~/common/helpers/file-cleanup.js', async () => {
   return {
     removeTemporaryFile: mockRemoveTemporaryFileFn
   }
 })
 
 // Mock config
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: {
     get: mockConfigGetFn
   }

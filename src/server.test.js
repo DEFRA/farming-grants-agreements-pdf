@@ -1,9 +1,9 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import Hapi from '@hapi/hapi'
 
-import { createServer } from '~/src/server.js'
-import * as setupProxyModule from '~/src/common/helpers/proxy/setup-proxy.js'
-import { config } from '~/src/config.js'
+import { createServer } from '#~/server.js'
+import * as setupProxyModule from '#~/common/helpers/proxy/setup-proxy.js'
+import { config } from '#~/config.js'
 
 describe('createServer', () => {
   let mockServer

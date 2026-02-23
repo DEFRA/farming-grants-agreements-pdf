@@ -25,10 +25,5 @@ export default defineConfig({
     teardownTimeout: 10000,
     pool: 'forks', // Use fork pool for better compatibility with Jest-style mocks
     singleThread: true // Run tests serially similar to Jest --runInBand
-  },
-  resolve: {
-    alias: {
-      '~': '.'
-    }
   }
 })

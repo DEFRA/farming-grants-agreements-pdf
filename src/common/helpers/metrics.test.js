@@ -1,8 +1,8 @@
 import { vi } from 'vitest'
 import { StorageResolution, Unit } from 'aws-embedded-metrics'
 
-import { metricsCounter } from '~/src/common/helpers/metrics.js'
-import { config } from '~/src/config.js'
+import { metricsCounter } from '#~/common/helpers/metrics.js'
+import { config } from '#~/config.js'
 
 // Use hoisted mocks
 const { mockPutMetric, mockFlush, mockLoggerErrorFn } = vi.hoisted(() => ({
@@ -20,7 +20,7 @@ vi.mock('aws-embedded-metrics', () => ({
   Unit: { Count: 'Count' }
 }))
 
-vi.mock('~/src/common/helpers/logging/logger.js', () => ({
+vi.mock('#~/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: mockLoggerErrorFn })
 }))
 

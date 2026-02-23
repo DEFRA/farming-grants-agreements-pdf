@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import * as fsModule from 'node:fs/promises'
-import { removeTemporaryFile } from '~/src/common/helpers/file-cleanup.js'
+import { removeTemporaryFile } from '#~/common/helpers/file-cleanup.js'
 
 // Mock fs/promises
 vi.mock('node:fs/promises', async (importOriginal) => {

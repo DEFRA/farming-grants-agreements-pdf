@@ -1,8 +1,16 @@
-import 'dotenv/config'
+import { loadEnvFile } from 'node:process'
 import convict from 'convict'
 import convictFormatWithValidator from 'convict-format-with-validator'
 import path from 'node:path'
 import os from 'node:os'
+
+try {
+  loadEnvFile()
+} catch (error) {
+  if (error.code !== 'ENOENT') {
+    throw error
+  }
+}
 
 convict.addFormats(convictFormatWithValidator)
 

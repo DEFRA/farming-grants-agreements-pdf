@@ -4,7 +4,7 @@ import { vi } from 'vitest'
 import {
   handleEvent,
   processMessage
-} from '~/src/common/helpers/sqs-message-processor.js'
+} from '#~/common/helpers/sqs-message-processor.js'
 
 // Use vi.hoisted() to ensure mock functions are available before mock factories run
 const { mockGeneratePdfFn, mockUploadPdfFn, mockConfigGetFn } = vi.hoisted(
@@ -25,15 +25,15 @@ const { mockGeneratePdfFn, mockUploadPdfFn, mockConfigGetFn } = vi.hoisted(
   }
 )
 
-vi.mock('~/src/services/pdf-generator.js', () => ({
+vi.mock('#~/services/pdf-generator.js', () => ({
   generatePdf: mockGeneratePdfFn
 }))
 
-vi.mock('~/src/services/file-upload.js', () => ({
+vi.mock('#~/services/file-upload.js', () => ({
   uploadPdf: mockUploadPdfFn
 }))
 
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: {
     get: mockConfigGetFn
   }

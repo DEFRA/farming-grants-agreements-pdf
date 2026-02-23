@@ -2,8 +2,8 @@ import puppeteer from 'puppeteer'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import * as Jwt from '@hapi/jwt'
-import { config } from '~/src/config.js'
-import { removeTemporaryFile } from '~/src/common/helpers/file-cleanup.js'
+import { config } from '#~/config.js'
+import { removeTemporaryFile } from '#~/common/helpers/file-cleanup.js'
 
 let browserClosed = false
 

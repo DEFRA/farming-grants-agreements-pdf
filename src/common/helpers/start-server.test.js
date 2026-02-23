@@ -1,14 +1,26 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 
-import { startServer } from '~/src/common/helpers/start-server.js'
-import { config } from '~/src/config.js'
+import { startServer } from '#~/common/helpers/start-server.js'
 
-// Mock config at the top level using hoisted
-const { mockConfigGetFn } = vi.hoisted(() => ({
-  mockConfigGetFn: vi.fn().mockReturnValue(3000)
-}))
+const { mockConfigGetFn } = vi.hoisted(() => {
+  const fn = vi.fn().mockImplementation((key) => {
+    switch (key) {
+      case 'port':
+        return 3000
+      case 'log':
+        return { isEnabled: true, redact: [], level: 'info', format: 'ecs' }
+      case 'serviceName':
+        return 'test-service'
+      case 'serviceVersion':
+        return '0.0.0'
+      default:
+        return undefined
+    }
+  })
+  return { mockConfigGetFn: fn }
+})
 
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: {
     get: mockConfigGetFn
   }
@@ -49,10 +61,6 @@ describe('startServer', () => {
     mockCreateLoggerFn = vi.fn().mockReturnValue(mockLogger)
     mockLoggerInfoFn = mockLogger.info
     mockLoggerErrorFn = mockLogger.error
-
-    // Reset config mock - use spyOn as fallback if mock doesn't work
-    mockConfigGetFn.mockReturnValue(3000)
-    vi.spyOn(config, 'get').mockImplementation(mockConfigGetFn)
   })
 
   describe('When server starts successfully', () => {
@@ -81,8 +89,9 @@ describe('startServer', () => {
       expect(mockServerLogger.info).toHaveBeenCalledWith(
         'Server started successfully'
       )
+      expect(mockConfigGetFn).toHaveBeenCalledWith('port')
       expect(mockServerLogger.info).toHaveBeenCalledWith(
-        expect.stringMatching(/^Access your backend on http:\/\/localhost:\d+$/)
+        'Access your backend on http://localhost:3000'
       )
     })
 
@@ -92,16 +101,6 @@ describe('startServer', () => {
       expect(result).toBeDefined()
       expect(result.logger).toBe(mockServerLogger)
       expect(result.start).toBe(mockServerStartFn)
-    })
-
-    test('Should use port from config', async () => {
-      mockConfigGetFn.mockReturnValue(8080)
-      await startServer({ createServerFn: mockCreateServerFn })
-
-      expect(mockConfigGetFn).toHaveBeenCalledWith('port')
-      expect(mockServerLogger.info).toHaveBeenCalledWith(
-        'Access your backend on http://localhost:8080'
-      )
     })
   })
 

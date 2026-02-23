@@ -1,7 +1,7 @@
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { Consumer } from 'sqs-consumer'
-import { config } from '~/src/config.js'
-import { processMessage } from '~/src/common/helpers/sqs-message-processor.js'
+import { config } from '#~/config.js'
+import { processMessage } from '#~/common/helpers/sqs-message-processor.js'
 
 /**
  * Hapi plugin for SQS message processing
@@ -80,6 +80,6 @@ export const sqsClientPlugin = {
 }
 
 /**
- * @import { Agreement } from '~/src/api/common/types/agreement.d.js'
+ * @import { Agreement } from '#~/api/common/types/agreement.d.js'
  * @import { Message } from '@aws-sdk/client-sqs'
  */

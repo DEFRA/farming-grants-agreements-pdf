@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { generatePdf } from '~/src/services/pdf-generator.js'
+import { generatePdf } from '#~/services/pdf-generator.js'
 
 // Use vi.hoisted() to ensure mock functions are available before mock factories run
 const {
@@ -43,12 +43,12 @@ const {
 })
 
 // Mock file-cleanup module
-vi.mock('~/src/common/helpers/file-cleanup.js', () => ({
+vi.mock('#~/common/helpers/file-cleanup.js', () => ({
   removeTemporaryFile: mockRemoveTemporaryFileFn
 }))
 
 // Mock config
-vi.mock('~/src/config.js', () => ({
+vi.mock('#~/config.js', () => ({
   config: {
     get: mockConfigGetFn
   }
@@ -261,13 +261,10 @@ describe('PDF Generator Service', () => {
 
       await generatePdf(agreementData, filename, mockLogger)
 
-      expect(mockFsMkdirFn).toHaveBeenCalledWith(
-        expect.stringContaining('defra-pdf'),
-        {
-          recursive: true,
-          mode: 0o700
-        }
-      )
+      expect(mockFsMkdirFn).toHaveBeenCalledWith('/tmp/pdfs', {
+        recursive: true,
+        mode: 0o700
+      })
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('Creating secure temporary directory:')
       )
