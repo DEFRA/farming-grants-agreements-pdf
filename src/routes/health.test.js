@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { health } from '#~/routes/health.js'
+import { config } from '#~/config.js'
 
 describe('health route', () => {
   describe('route configuration', () => {
@@ -25,27 +26,37 @@ describe('health route', () => {
       mockH = {
         response: vi.fn().mockReturnThis()
       }
+      config.set('serviceVersion', 'versionMock')
     })
 
     test('should return success message', () => {
       const result = health.handler(mockRequest, mockH)
 
-      expect(mockH.response).toHaveBeenCalledWith({ message: 'success' })
+      expect(mockH.response).toHaveBeenCalledWith({
+        message: 'success',
+        version: 'versionMock'
+      })
       expect(result).toBe(mockH)
     })
 
     test('should not use request parameter', () => {
       health.handler(mockRequest, mockH)
 
-      expect(mockH.response).toHaveBeenCalledWith({ message: 'success' })
+      expect(mockH.response).toHaveBeenCalledWith({
+        message: 'success',
+        version: 'versionMock'
+      })
     })
 
     test('should return response with correct structure', () => {
       health.handler(mockRequest, mockH)
 
       const responseCall = mockH.response.mock.calls[0][0]
-      expect(responseCall).toEqual({ message: 'success' })
-      expect(Object.keys(responseCall)).toEqual(['message'])
+      expect(responseCall).toEqual({
+        message: 'success',
+        version: 'versionMock'
+      })
+      expect(Object.keys(responseCall)).toEqual(['message', 'version'])
     })
 
     test('should work with different request objects', () => {
@@ -63,7 +74,10 @@ describe('health route', () => {
 
         health.handler(request, mockH)
 
-        expect(mockH.response).toHaveBeenCalledWith({ message: 'success' })
+        expect(mockH.response).toHaveBeenCalledWith({
+          message: 'success',
+          version: 'versionMock'
+        })
       })
     })
 
@@ -73,7 +87,25 @@ describe('health route', () => {
       const result2 = health.handler({ different: 'request' }, mockH)
 
       expect(mockH.response).toHaveBeenCalledTimes(1)
-      expect(mockH.response).toHaveBeenCalledWith({ message: 'success' })
+      expect(mockH.response).toHaveBeenCalledWith({
+        message: 'success',
+        version: 'versionMock'
+      })
+      expect(result1).toBe(mockH)
+      expect(result2).toBe(mockH)
+    })
+
+    test('falls back to dev version when version is not set', async () => {
+      config.set('serviceVersion', null)
+      const result1 = health.handler(mockRequest, mockH)
+      mockH.response.mockClear()
+      const result2 = health.handler({ different: 'request' }, mockH)
+
+      expect(mockH.response).toHaveBeenCalledTimes(1)
+      expect(mockH.response).toHaveBeenCalledWith({
+        message: 'success',
+        version: 'dev'
+      })
       expect(result1).toBe(mockH)
       expect(result2).toBe(mockH)
     })
