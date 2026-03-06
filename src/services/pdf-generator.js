@@ -22,7 +22,13 @@ async function createBrowser(logger) {
     ]
   })
 
+  browser.on('targetcreated', () => {
+    logger.info('Browser connected')
+    browserClosed = false
+  })
+
   browser.on('disconnected', () => {
+    logger.info('Browser disconnected')
     browserClosed = true
   })
 
