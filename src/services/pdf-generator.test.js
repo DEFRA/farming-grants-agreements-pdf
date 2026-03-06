@@ -534,5 +534,46 @@ describe('PDF Generator Service', () => {
       expect(funcCode).toContain('form')
       expect(funcCode).toContain('view-agreement')
     })
+
+    test('should log when browser is connected', async () => {
+      mockBrowserOnFn.mockImplementation((event, callback) => {
+        if (event === 'targetcreated') {
+          callback()
+        }
+      })
+
+      await generatePdf(agreementData, filename, mockLogger)
+
+      expect(mockLogger.info).toHaveBeenCalledWith('Browser connected')
+      expect(mockBrowserCloseFn).toHaveBeenCalled()
+    })
+
+    test('should log and set browserClosed when browser is disconnected', async () => {
+      mockBrowserOnFn.mockImplementation((event, callback) => {
+        if (event === 'disconnected') {
+          callback()
+        }
+      })
+
+      await generatePdf(agreementData, filename, mockLogger)
+
+      expect(mockLogger.info).toHaveBeenCalledWith('Browser disconnected')
+      // If browserClosed is true, browser.close() should NOT be called in finally
+      expect(mockBrowserCloseFn).not.toHaveBeenCalled()
+    })
+
+    test('should close the browser when the browser is connected', async () => {
+      mockBrowserOnFn.mockImplementation((event, callback) => {
+        if (event === 'targetcreated') {
+          callback()
+        }
+      })
+
+      // Twice
+      await generatePdf(agreementData, filename, mockLogger)
+      await generatePdf(agreementData, filename, mockLogger)
+
+      expect(mockBrowserCloseFn).toHaveBeenCalledTimes(2)
+    })
   })
 })
