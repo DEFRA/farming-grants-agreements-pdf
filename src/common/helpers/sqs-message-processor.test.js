@@ -525,7 +525,8 @@ describe('SQS message processor', () => {
         'FPTT123456789',
         2,
         '2027-12-31',
-        mockLogger
+        mockLogger,
+        'test-correlation-id'
       )
       expect(result).toBe('/path/to/generated.pdf')
     })
