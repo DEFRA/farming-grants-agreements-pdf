@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import { addMonths, differenceInYears, startOfMonth } from 'date-fns'
 import { config } from '#~/config.js'
 import { removeTemporaryFile } from '#~/common/helpers/file-cleanup.js'
+import { auditEvent, AuditEvent } from '#~/common/helpers/audit-event.js'
 
 const s3Client = new S3Client(
   process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
@@ -103,6 +104,7 @@ export function calculateRetentionPeriod(endDate) {
  * @param {string} version Farming agreement document version
  * @param {Date|string} endDate Agreement end date
  * @param {Logger} logger Logger instance
+ * @param {string} [correlationId] Correlation ID from the originating SQS message
  * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
  */
 export async function uploadPdf(
@@ -111,7 +113,8 @@ export async function uploadPdf(
   agreementNumber,
   version,
   endDate,
-  logger
+  logger,
+  correlationId
 ) {
   let uploadResult
 
@@ -122,6 +125,14 @@ export async function uploadPdf(
       .join('/')
 
     uploadResult = await upload(pdfPath, key, logger)
+    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+      agreementNumber,
+      version,
+      key: uploadResult.key,
+      bucket: uploadResult.bucket,
+      location: uploadResult.location,
+      correlationId
+    })
   } catch (err) {
     logger.error(err, `Error in PDF ${filename} generation and upload process`)
   } finally {
