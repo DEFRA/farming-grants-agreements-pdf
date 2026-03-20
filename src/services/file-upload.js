@@ -71,7 +71,7 @@ async function upload(filePath, key, logger) {
  * @param {Date|string} endDate Agreement end date
  * @returns {string} S3 prefix for the retention period
  */
-export function calculateRetentionPeriod(endDate) {
+function calculateRetentionPeriod(endDate) {
   // Agreement start date is always the first day of next month
   const startDate = startOfMonth(addMonths(new Date(), 1))
 

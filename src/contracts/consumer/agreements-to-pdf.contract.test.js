@@ -6,7 +6,7 @@ import {
 } from '@pact-foundation/pact'
 
 import { handleEvent } from '#~/common/helpers/sqs-message-processor.js'
-import { buildMessagePactConfig } from '#~/contracts/consumer/pact-test-helpers.js'
+import { buildMessagePactConfig } from '#~/contracts/consumer/test-helpers/pact-test-helpers.js'
 
 const { like, iso8601DateTimeWithMillis } = MatchersV2
 

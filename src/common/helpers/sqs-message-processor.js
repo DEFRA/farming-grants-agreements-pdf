@@ -138,7 +138,7 @@ const processOfferAcceptedEvent = async (
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @returns {Promise<String>}
  */
-export const handleEvent = async (notificationMessageId, payload, logger) => {
+const handleEvent = async (notificationMessageId, payload, logger) => {
   if (!payload.type.includes('agreement.status.updated')) {
     throw new Error('Unrecognized event type')
   }
