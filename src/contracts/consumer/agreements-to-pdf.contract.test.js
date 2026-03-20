@@ -5,7 +5,7 @@ import {
   MatchersV2
 } from '@pact-foundation/pact'
 
-import { handleEvent } from '#~/common/helpers/sqs-message-processor.js'
+import { processMessage } from '#~/common/helpers/sqs-message-processor.js'
 import { buildMessagePactConfig } from '#~/contracts/consumer/test-helpers/pact-test-helpers.js'
 
 const { like, iso8601DateTimeWithMillis } = MatchersV2
@@ -92,11 +92,11 @@ describe('receive an agreement accepted event', () => {
           mockGeneratePdfFn.mockResolvedValue('mockPathToPdf')
           mockUploadPdfFn.mockResolvedValue({ success: true })
 
-          const result = await handleEvent(
-            'notificationMessageId',
-            payload,
-            mockLogger
-          )
+          const message = {
+            MessageId: 'notificationMessageId',
+            Body: JSON.stringify(payload)
+          }
+          await processMessage(message, mockLogger)
 
           expect(mockGeneratePdfFn).toHaveBeenCalledWith(
             {
@@ -118,7 +118,15 @@ describe('receive an agreement accepted event', () => {
               'Agreement FPTT123456789 PDF uploaded successfully'
             )
           )
-          expect(result).toBe('mockPathToPdf')
+          expect(mockUploadPdfFn).toHaveBeenCalledWith(
+            'mockPathToPdf',
+            'FPTT123456789-1.pdf',
+            'FPTT123456789',
+            1,
+            '2025-09-31',
+            mockLogger,
+            'mockCorrelationId'
+          )
         })
       )
   })
