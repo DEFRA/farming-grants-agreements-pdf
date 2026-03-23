@@ -1,16 +1,11 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const pactConsumer = 'farming-grants-agreements-pdf'
-export const pactProvider = 'farming-grants-agreements-api'
+const pactConsumer = 'farming-grants-agreements-pdf'
+const pactProvider = 'farming-grants-agreements-api'
 
-export const pactOutputDir = path.resolve(
-  'src',
-  'contracts',
-  'consumer',
-  'pacts'
-)
-export const pactGeneratedDir = path.join(pactOutputDir, 'generated')
+const pactOutputDir = path.resolve('src', 'contracts', 'consumer', 'pacts')
+const pactGeneratedDir = path.join(pactOutputDir, 'generated')
 
 const buildPactDirName = (testFileUrl) => {
   const testFilePath = fileURLToPath(testFileUrl)

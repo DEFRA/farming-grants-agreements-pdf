@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
-import { uploadPdf, calculateRetentionPeriod } from '#~/services/file-upload.js'
+import { uploadPdf } from '#~/services/file-upload.js'
 
 // Use vi.hoisted() to ensure mock functions are available before mock factories run
 const {
@@ -128,86 +128,6 @@ describe('File Upload Service', () => {
     mockAddMonthsFn.mockReturnValue(mockStartDate)
   })
 
-  describe('calculateRetentionPeriod', () => {
-    test('should return base term prefix when total years is less than or equal to base threshold', () => {
-      const endDate = new Date('2027-01-01') // 3 years from start
-      mockDifferenceInYearsFn.mockReturnValue(3) // 3 + 7 (base) = 10
-
-      const result = calculateRetentionPeriod(endDate)
-
-      expect(result).toBe('base')
-    })
-
-    test('should return base term prefix when total years equals base threshold', () => {
-      const endDate = new Date('2027-01-01')
-      mockDifferenceInYearsFn.mockReturnValue(3) // 3 + 7 = 10 (exactly at threshold)
-
-      const result = calculateRetentionPeriod(endDate)
-
-      expect(result).toBe('base')
-    })
-
-    test('should return extended term prefix when total years is between base and extended threshold', () => {
-      const endDate = new Date('2030-01-01')
-      mockDifferenceInYearsFn.mockReturnValue(6) // 6 + 7 = 13 (between 10 and 15)
-
-      const result = calculateRetentionPeriod(endDate)
-
-      expect(result).toBe('extended')
-    })
-
-    test('should return extended term prefix when total years equals extended threshold', () => {
-      const endDate = new Date('2031-01-01')
-      mockDifferenceInYearsFn.mockReturnValue(8) // 8 + 7 = 15 (exactly at threshold)
-
-      const result = calculateRetentionPeriod(endDate)
-
-      expect(result).toBe('extended')
-    })
-
-    test('should return maximum term prefix when total years exceeds extended threshold', () => {
-      const endDate = new Date('2035-01-01')
-      mockDifferenceInYearsFn.mockReturnValue(11) // 11 + 7 = 18 (exceeds 15)
-
-      const result = calculateRetentionPeriod(endDate)
-
-      expect(result).toBe('maximum')
-    })
-
-    test('should handle string date input', () => {
-      const endDate = '2027-01-01'
-      mockDifferenceInYearsFn.mockReturnValue(3)
-
-      const result = calculateRetentionPeriod(endDate)
-
-      expect(result).toBe('base')
-      expect(mockDifferenceInYearsFn).toHaveBeenCalledWith(
-        expect.any(Date),
-        expect.any(Date)
-      )
-    })
-
-    test('should calculate start date as first day of next month', () => {
-      const mockDate = new Date('2024-01-15')
-      vi.useFakeTimers()
-      vi.setSystemTime(mockDate)
-
-      const mockNextMonth = new Date('2024-02-01')
-      mockAddMonthsFn.mockReturnValue(mockNextMonth)
-      mockStartOfMonthFn.mockReturnValue(mockNextMonth)
-
-      const endDate = new Date('2027-01-01')
-      mockDifferenceInYearsFn.mockReturnValue(3)
-
-      calculateRetentionPeriod(endDate)
-
-      expect(mockAddMonthsFn).toHaveBeenCalledWith(expect.any(Date), 1)
-      expect(mockStartOfMonthFn).toHaveBeenCalled()
-
-      vi.useRealTimers()
-    })
-  })
-
   describe('uploadPdf', () => {
     const pdfPath = '/tmp/test.pdf'
     const filename = 'agreement-123.pdf'
@@ -290,7 +210,7 @@ describe('File Upload Service', () => {
       expect(putCommand.Key).toBe('base/AGR001/agreement-123.pdf')
     })
 
-    test('should use extended term prefix when calculated', async () => {
+    test('should use extended term prefix when calculated (between base and extended threshold)', async () => {
       mockDifferenceInYearsFn.mockReturnValue(6) // 6 + 7 = 13 (extended term)
 
       await uploadPdf(
@@ -304,6 +224,38 @@ describe('File Upload Service', () => {
 
       const putCommand = mockS3ClientSendFn.mock.calls[0][0]
       expect(putCommand.Key).toBe('extended/AGR001/v1/agreement-123.pdf')
+    })
+
+    test('should use extended term prefix when exactly at extended threshold', async () => {
+      mockDifferenceInYearsFn.mockReturnValue(8) // 8 + 7 = 15 (exactly extended threshold)
+
+      await uploadPdf(
+        pdfPath,
+        filename,
+        agreementNumber,
+        version,
+        endDate,
+        mockLogger
+      )
+
+      const putCommand = mockS3ClientSendFn.mock.calls[0][0]
+      expect(putCommand.Key).toBe('extended/AGR001/v1/agreement-123.pdf')
+    })
+
+    test('should use maximum term prefix when just above extended threshold', async () => {
+      mockDifferenceInYearsFn.mockReturnValue(9) // 9 + 7 = 16 (above 15)
+
+      await uploadPdf(
+        pdfPath,
+        filename,
+        agreementNumber,
+        version,
+        endDate,
+        mockLogger
+      )
+
+      const putCommand = mockS3ClientSendFn.mock.calls[0][0]
+      expect(putCommand.Key).toBe('maximum/AGR001/v1/agreement-123.pdf')
     })
 
     test('should use maximum term prefix when calculated', async () => {
@@ -320,6 +272,32 @@ describe('File Upload Service', () => {
 
       const putCommand = mockS3ClientSendFn.mock.calls[0][0]
       expect(putCommand.Key).toBe('maximum/AGR001/v1/agreement-123.pdf')
+    })
+
+    test('should calculate start date as first day of next month when determining retention', async () => {
+      const mockDate = new Date('2024-01-15')
+      vi.useFakeTimers()
+      vi.setSystemTime(mockDate)
+
+      const mockNextMonth = new Date('2024-02-01')
+      mockAddMonthsFn.mockReturnValue(mockNextMonth)
+      mockStartOfMonthFn.mockReturnValue(mockNextMonth)
+
+      mockDifferenceInYearsFn.mockReturnValue(3)
+
+      await uploadPdf(
+        pdfPath,
+        filename,
+        agreementNumber,
+        version,
+        endDate,
+        mockLogger
+      )
+
+      expect(mockAddMonthsFn).toHaveBeenCalledWith(expect.any(Date), 1)
+      expect(mockStartOfMonthFn).toHaveBeenCalled()
+
+      vi.useRealTimers()
     })
 
     test('should cleanup local file after successful upload', async () => {
