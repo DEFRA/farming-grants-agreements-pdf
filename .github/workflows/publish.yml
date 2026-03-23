@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       localstack:
-        image: localstack/localstack:latest
+        image: localstack/localstack:3.0.2
         env:
           SERVICES: s3,sns,sqs
           DEFAULT_REGION: eu-west-2
