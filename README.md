@@ -25,6 +25,7 @@ Core delivery platform Node.js Backend Template.
   - [Viewing messages in LocalStack SQS](#viewing-messages-in-localstack-sqs)
   - [Dependabot](#dependabot)
   - [SonarCloud](#sonarcloud)
+- [API endpoints](#api-endpoints)
 - [Licence](#licence)
   - [About the licence](#about-the-licence)
 
