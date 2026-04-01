@@ -16,7 +16,7 @@ convict.addFormats(convictFormatWithValidator)
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
-const localstackEndpoint = 'http://localhost:4566'
+const flociEndpoint = 'http://localhost:4566'
 
 // Default temporary directory for PDF generation
 // Development: uses os temp directory /tmp/defra-pdf (or OS equivalent)
@@ -150,7 +150,7 @@ const config = convict({
         env: 'FILES_S3_RETENTION_BASE_YEARS'
       },
       endpoint: {
-        doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Localstack.',
+        doc: 'The S3 HTTP(S) endpoint, if required (e.g. a local development dev service). Activating this will force path style addressing for compatibility with Floci.',
         format: String,
         default: 'http://localhost:4568',
         env: 'S3_ENDPOINT'
@@ -160,7 +160,7 @@ const config = convict({
       endpoint: {
         doc: 'AWS SNS endpoint',
         format: String,
-        default: localstackEndpoint,
+        default: flociEndpoint,
         env: 'SNS_ENDPOINT'
       },
       maxAttempts: {
@@ -197,7 +197,7 @@ const config = convict({
       endpoint: {
         doc: 'AWS SQS endpoint',
         format: String,
-        default: localstackEndpoint,
+        default: flociEndpoint,
         env: 'SQS_ENDPOINT'
       },
       queueUrl: {

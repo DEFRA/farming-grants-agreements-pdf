@@ -22,7 +22,7 @@ Core delivery platform Node.js Backend Template.
   - [Development image](#development-image)
   - [Production image](#production-image)
   - [Docker Compose](#docker-compose)
-  - [Viewing messages in LocalStack SQS](#viewing-messages-in-localstack-sqs)
+  - [Viewing messages in Floci SQS](#viewing-messages-in-floci-sqs)
   - [Dependabot](#dependabot)
   - [SonarCloud](#sonarcloud)
 - [API endpoints](#api-endpoints)
@@ -149,7 +149,7 @@ docker run -p 3556:3556 farming-grants-agreements-pdf
 
 A local environment with:
 
-- Localstack for AWS services (S3, SQS)
+- Floci for AWS services (S3, SQS)
 - Redis
 - This service.
 
@@ -157,19 +157,19 @@ A local environment with:
 docker compose up --build -d
 ```
 
-### Viewing messages in LocalStack SQS
+### Viewing messages in Floci SQS
 
-By default, our LocalStack monitor only shows message counts (`ApproximateNumberOfMessages`, `ApproximateNumberOfMessagesNotVisible`) for each queue. This is intentional, so we don’t interfere with the application’s consumers — pulling messages removes them from visibility until they are deleted or the visibility timeout expires.
+By default, our Floci monitor only shows message counts (`ApproximateNumberOfMessages`, `ApproximateNumberOfMessagesNotVisible`) for each queue. This is intentional, so we don't interfere with the application's consumers — pulling messages removes them from visibility until they are deleted or the visibility timeout expires.
 
 If you want to peek at the actual messages (for debugging or development only), you can run:
 
 ```bash
-docker compose exec localstack sh -lc '
-  QURL=$(awslocal sqs get-queue-url \
+docker compose exec floci sh -lc '
+  QURL=$(aws --endpoint-url http://127.0.0.1:4566 sqs get-queue-url \
     --queue-name create_agreement_pdf_fifo.fifo \
     --query QueueUrl --output text)
 
-  awslocal sqs receive-message \
+  aws --endpoint-url http://127.0.0.1:4566 sqs receive-message \
     --queue-url "$QURL" \
     --max-number-of-messages 10 \
     --wait-time-seconds 1 \

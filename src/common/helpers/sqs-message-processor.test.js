@@ -91,7 +91,7 @@ describe('SQS message processor', () => {
       await processMessage(message, mockLogger)
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'Processing message body:',
+        'Processing payload:',
         expect.any(String)
       )
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -126,6 +126,127 @@ describe('SQS message processor', () => {
 
       await expect(processMessage(message, mockLogger)).rejects.toThrow(
         'Error processing SQS message'
+      )
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.any(Error),
+        'Error processing message'
+      )
+    })
+
+    it('should unwrap and process SNS-wrapped message correctly', async () => {
+      const mockPayload = {
+        type: 'agreement.status.updated',
+        data: {
+          agreementNumber: 'FPTT123456789',
+          correlationId: 'test-correlation-id',
+          clientRef: 'test-client-ref',
+          frn: 'test-frn',
+          sbi: 'test-sbi',
+          version: 1,
+          status: 'accepted',
+          agreementUrl: 'https://example.com/agreement/FPTT123456789',
+          endDate: '2027-12-31'
+        }
+      }
+
+      const snsMessage = {
+        Type: 'Notification',
+        MessageId: 'sns-message-id',
+        TopicArn: 'arn:aws:sns:eu-west-2:000000000000:test-topic',
+        Message: JSON.stringify(mockPayload),
+        Timestamp: '2023-01-01T00:00:00.000Z'
+      }
+
+      const message = {
+        MessageId: 'aws-sqs-message-id',
+        Body: JSON.stringify(snsMessage)
+      }
+
+      await processMessage(message, mockLogger)
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Processing payload:',
+        JSON.stringify(mockPayload)
+      )
+      expect(mockGeneratePdfFn).toHaveBeenCalledWith(
+        mockPayload.data,
+        'FPTT123456789-1.pdf',
+        mockLogger
+      )
+    })
+
+    it('should process raw message (non-SNS) without unwrapping', async () => {
+      const mockPayload = {
+        type: 'agreement.status.updated',
+        data: {
+          agreementNumber: 'FPTT123456789',
+          correlationId: 'test-correlation-id',
+          clientRef: 'test-client-ref',
+          frn: 'test-frn',
+          sbi: 'test-sbi',
+          version: 1,
+          status: 'accepted',
+          agreementUrl: 'https://example.com/agreement/FPTT123456789',
+          endDate: '2027-12-31'
+        }
+      }
+
+      const message = {
+        MessageId: 'aws-sqs-message-id',
+        Body: JSON.stringify(mockPayload)
+      }
+
+      await processMessage(message, mockLogger)
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Processing payload:',
+        JSON.stringify(mockPayload)
+      )
+      expect(mockGeneratePdfFn).toHaveBeenCalledWith(
+        mockPayload.data,
+        'FPTT123456789-1.pdf',
+        mockLogger
+      )
+    })
+
+    it('should handle SNS message without Message field', async () => {
+      const snsMessage = {
+        Type: 'Notification',
+        MessageId: 'sns-message-id',
+        TopicArn: 'arn:aws:sns:eu-west-2:000000000000:test-topic',
+        Timestamp: '2023-01-01T00:00:00.000Z'
+      }
+
+      const message = {
+        MessageId: 'aws-sqs-message-id',
+        Body: JSON.stringify(snsMessage)
+      }
+
+      await expect(processMessage(message, mockLogger)).rejects.toThrow(
+        'Error processing SQS message'
+      )
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.any(Error),
+        'Error processing message'
+      )
+    })
+
+    it('should handle SNS message with malformed JSON in Message field', async () => {
+      const snsMessage = {
+        Type: 'Notification',
+        MessageId: 'sns-message-id',
+        TopicArn: 'arn:aws:sns:eu-west-2:000000000000:test-topic',
+        Message: 'not valid json',
+        Timestamp: '2023-01-01T00:00:00.000Z'
+      }
+
+      const message = {
+        MessageId: 'aws-sqs-message-id',
+        Body: JSON.stringify(snsMessage)
+      }
+
+      await expect(processMessage(message, mockLogger)).rejects.toThrow(
+        'Invalid message format'
       )
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.any(Error),

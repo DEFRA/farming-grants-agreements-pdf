@@ -19,8 +19,8 @@ jobs:
     name: CDP-build-workflow
     runs-on: ubuntu-latest
     services:
-      localstack:
-        image: localstack/localstack:3.0.2
+      floci:
+        image: hectorvent/floci:1.1.0
         env:
           SERVICES: s3,sns,sqs
           DEFAULT_REGION: eu-west-2
@@ -29,7 +29,7 @@ jobs:
         ports:
           - 4566:4566
         options: >-
-          --health-cmd "awslocal s3 ls || exit 1"
+          --health-cmd "curl --fail http://127.0.0.1:4566"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
