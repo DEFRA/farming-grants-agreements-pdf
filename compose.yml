@@ -1,25 +1,35 @@
 services:
-  localstack:
-    image: localstack/localstack:3.0.2
-    container_name: farming-grants-agreements-pdf-localstack
+  floci:
+    image: hectorvent/floci:1.1.0
+    container_name: farming-grants-agreements-pdf-floci
     ports:
-      - '4568:4566' # LocalStack Gateway (PDF)
+      - '4568:4566' # Floci Gateway (PDF)
       - '4610-4659:4610-4659' # external services port range (PDF)
     env_file:
       - 'compose/aws.env'
     environment:
       DEBUG: ${DEBUG:-1}
-      LS_LOG: WARN # Localstack DEBUG Level
+      LS_LOG: WARN # Floci DEBUG Level
       SERVICES: s3
-      LOCALSTACK_HOST: 127.0.0.1
-    volumes:
-      - '${TMPDIR:-/tmp}/farming-grants-agreements-pdf-localstack:/var/lib/localstack'
-      - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
     healthcheck:
-      test: ['CMD', 'curl', 'localhost:4566']
+      test: ['CMD', 'curl', '--fail', 'http://127.0.0.1:4566']
       interval: 5s
       start_period: 5s
       retries: 3
+    networks:
+      - cdp-tenant
+
+  floci-init:
+    image: amazon/aws-cli
+    entrypoint: /bin/sh
+    command: /setup/start-floci.sh
+    depends_on:
+      floci:
+        condition: service_healthy
+    env_file:
+      - 'compose/aws.env'
+    volumes:
+      - ./compose/start-floci.sh:/setup/start-floci.sh
     networks:
       - cdp-tenant
 
@@ -30,10 +40,12 @@ services:
     ports:
       - '3556:3556'
     links:
-      - 'localstack:localstack'
+      - 'floci:floci'
     depends_on:
-      localstack:
+      floci:
         condition: service_healthy
+      floci-init:
+        condition: service_completed_successfully
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     env_file:
@@ -41,14 +53,14 @@ services:
     environment:
       PORT: 3556
       NODE_ENV: development
-      LOCALSTACK_ENDPOINT: http://host.docker.internal:4566
+      FLOCI_ENDPOINT: http://host.docker.internal:4566
       SQS_ENDPOINT: http://host.docker.internal:4566
       QUEUE_URL: http://host.docker.internal:4566/000000000000/create_agreement_pdf_fifo.fifo
       QUEUE_NAME: create_agreement_pdf_fifo.fifo
       SNS_ENDPOINT: http://host.docker.internal:4566
       SNS_TOPIC_TYPE_AGREEMENT_STATUS_UPDATED: io.onsite.agreement.status.updated
       SNS_TOPIC_ARN_AGREEMENT_STATUS_UPDATED: arn:aws:sns:eu-west-2:000000000000:agreement_status_updated_fifo.fifo
-      S3_ENDPOINT: http://localstack:4566
+      S3_ENDPOINT: http://floci:4566
       S3_BUCKET: farming-grants-agreements-pdf-bucket
       FILES_S3_BASE_TERM_PREFIX: ${FILES_S3_BASE_TERM_PREFIX:-base}
       FILES_S3_EXTENDED_TERM_PREFIX: ${FILES_S3_EXTENDED_TERM_PREFIX:-extended}

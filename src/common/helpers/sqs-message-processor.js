@@ -182,8 +182,15 @@ const handleProcessingError = (err, message, logger) => {
 export const processMessage = async (message, logger) => {
   try {
     const messageBody = JSON.parse(message.Body)
-    logger.info('Processing message body:', JSON.stringify(messageBody))
-    await handleEvent(message.MessageId, messageBody, logger)
+
+    // Handle both SNS-wrapped messages and raw messages (AWS production)
+    let payload = messageBody
+    if (messageBody.Type === 'Notification' && messageBody.Message) {
+      payload = JSON.parse(messageBody.Message)
+    }
+
+    logger.info('Processing payload:', JSON.stringify(payload))
+    await handleEvent(message.MessageId, payload, logger)
   } catch (err) {
     handleProcessingError(err, message, logger)
   }

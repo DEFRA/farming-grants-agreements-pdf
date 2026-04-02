@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Lists SNS topics, SNS subscriptions (notifications), and SQS queues from LocalStack
+# Lists SNS topics, SNS subscriptions (notifications), and SQS queues from Floci
 
-# Endpoint and credentials defaults for LocalStack
+# Endpoint and credentials defaults for Floci
 export ENDPOINT="${ENDPOINT:-http://localhost:4566}"
 export AWS_REGION="${AWS_REGION:-eu-west-2}"
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-$AWS_REGION}"
@@ -38,33 +38,12 @@ for arg in "$@"; do
   esac
 done
 
-# Prefer local awslocal if installed; otherwise, if using localhost and the
-# LocalStack container is available, exec into it; else fall back to aws.
-if command -v awslocal >/dev/null 2>&1; then
-  AWS_BIN=(awslocal)
-  CLI_LABEL="awslocal"
-elif [[ "$ENDPOINT" =~ ^http://localhost(:[0-9]+)?$ ]] \
-  && command -v docker >/dev/null 2>&1 \
-  && docker ps --format '{{.Names}}' | grep -q '^localstack$'; then
-  AWS_BIN=(docker exec \
-    -e AWS_REGION="${AWS_REGION}" \
-    -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
-    -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-    -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-    localstack awslocal)
-  CLI_LABEL="docker exec localstack awslocal"
-else
-  AWS_BIN=(aws --endpoint-url "$ENDPOINT")
-  CLI_LABEL="aws --endpoint-url $ENDPOINT"
-fi
-
 run() {
-  "${AWS_BIN[@]}" "$@"
+  aws --endpoint-url "$ENDPOINT" "$@"
 }
 
-echo "LocalStack endpoint: $ENDPOINT"
-echo "AWS region:          $AWS_REGION"
-echo "Using CLI:           $CLI_LABEL"
+echo "Floci endpoint: $ENDPOINT"
+echo "AWS region:     $AWS_REGION"
 echo
 
 echo "=== SNS Topics ==="
@@ -128,5 +107,3 @@ if [[ -n "${TOPIC_ARNS}" ]]; then
     fi
   done
 fi
-
-
