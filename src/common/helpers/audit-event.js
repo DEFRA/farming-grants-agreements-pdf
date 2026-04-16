@@ -15,6 +15,11 @@ const eventTransactionCodes = {
   [AuditEvent.PDF_UPLOADED_TO_S3]: '2307'
 }
 
+// Audit action for each event — must be one of: created, read, updated, deleted, submitted, accepted, rejected, withdrawn
+const eventActions = {
+  [AuditEvent.PDF_UPLOADED_TO_S3]: 'created'
+}
+
 /**
  * Builds the full audit payload for a PDF S3 operation.
  *
@@ -42,8 +47,8 @@ const buildAuditPayload = (event, context = {}, status = 'success') => ({
 
   audit: {
     eventtype: 'GrantsUploadAgreement',
-    action: event,
-    entity: 'Agreements',
+    action: eventActions[event],
+    entity: 'agreement',
     entityid: context.agreementNumber,
     status,
     details: context

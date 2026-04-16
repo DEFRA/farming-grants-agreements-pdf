@@ -117,14 +117,43 @@ describe('auditEvent', () => {
       expect.objectContaining({
         audit: expect.objectContaining({
           eventtype: 'GrantsUploadAgreement',
-          action: 'PDF_UPLOADED_TO_S3',
-          entity: 'Agreements',
+          action: 'created',
+          entity: 'agreement',
           entityid: 'FPTT123456789',
           status: 'success',
           details: context
         })
       })
     )
+  })
+
+  test('audit.action for PDF_UPLOADED_TO_S3 is a valid action value', () => {
+    const validActions = [
+      'created',
+      'read',
+      'updated',
+      'deleted',
+      'submitted',
+      'accepted',
+      'rejected',
+      'withdrawn'
+    ]
+
+    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+      agreementNumber: 'FPTT123456789'
+    })
+
+    const [[payload]] = audit.mock.calls
+    expect(validActions).toContain(payload.audit.action)
+  })
+
+  test('audit.entity is "agreement"', () => {
+    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+      agreementNumber: 'FPTT123456789'
+    })
+
+    const [[payload]] = audit.mock.calls
+    expect(payload.audit.entity).toBe('agreement')
   })
 
   test('passes failure status through to the audit payload', () => {
