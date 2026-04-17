@@ -15,9 +15,11 @@ const eventTransactionCodes = {
   [AuditEvent.PDF_UPLOADED_TO_S3]: '2307'
 }
 
-// Audit action for each event — must be one of: created, read, updated, deleted, submitted, accepted, rejected, withdrawn
-const eventActions = {
-  [AuditEvent.PDF_UPLOADED_TO_S3]: 'created'
+// Entities affected by each event — each entry is a function of context returning an array of { entity, action, id? }
+const eventEntities = {
+  [AuditEvent.PDF_UPLOADED_TO_S3]: (context) => [
+    { entity: 'agreement', action: 'created', id: context.agreementNumber }
+  ]
 }
 
 const snsClient = new SNSClient(
@@ -60,9 +62,7 @@ const buildAuditPayload = (event, context = {}, status = 'success') => ({
 
   audit: {
     eventtype: 'GrantsUploadAgreement',
-    action: eventActions[event],
-    entity: 'agreement',
-    entityid: context.agreementNumber,
+    entities: eventEntities[event](context),
     status,
     details: context
   }

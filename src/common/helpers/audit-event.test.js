@@ -148,15 +148,15 @@ describe('auditEvent', () => {
 
     expect(payload.audit).toMatchObject({
       eventtype: 'GrantsUploadAgreement',
-      action: 'created',
-      entity: 'agreement',
-      entityid: 'FPTT123456789',
+      entities: [
+        { entity: 'agreement', action: 'created', id: 'FPTT123456789' }
+      ],
       status: 'success',
       details: context
     })
   })
 
-  test('audit.action for PDF_UPLOADED_TO_S3 is a valid action value', async () => {
+  test('audit.entities contains valid action values', async () => {
     const validActions = [
       'created',
       'read',
@@ -174,17 +174,21 @@ describe('auditEvent', () => {
 
     const [command] = mockSnsClientSend.mock.calls[0]
     const payload = JSON.parse(command.Message)
-    expect(validActions).toContain(payload.audit.action)
+    for (const entry of payload.audit.entities) {
+      expect(validActions).toContain(entry.action)
+    }
   })
 
-  test('audit.entity is "agreement"', async () => {
+  test('audit.entities entries each have an entity property', async () => {
     await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
       agreementNumber: 'FPTT123456789'
     })
 
     const [command] = mockSnsClientSend.mock.calls[0]
     const payload = JSON.parse(command.Message)
-    expect(payload.audit.entity).toBe('agreement')
+    for (const entry of payload.audit.entities) {
+      expect(typeof entry.entity).toBe('string')
+    }
   })
 
   test('passes failure status through to the published payload', async () => {
@@ -201,6 +205,6 @@ describe('auditEvent', () => {
     const [command] = mockSnsClientSend.mock.calls[0]
     const payload = JSON.parse(command.Message)
     expect(payload.correlationid).toBeUndefined()
-    expect(payload.audit.entityid).toBeUndefined()
+    expect(payload.audit.entities[0].id).toBeUndefined()
   })
 })
