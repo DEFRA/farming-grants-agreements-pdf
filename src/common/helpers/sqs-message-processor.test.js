@@ -303,6 +303,19 @@ describe('SQS message processor', () => {
           'Agreement FPTT123456789 PDF uploaded successfully (true) to S3'
         )
       )
+
+      expect(mockUploadPdfFn).toHaveBeenCalledWith(
+        '/path/to/generated.pdf',
+        'FPTT123456789-1.pdf',
+        'FPTT123456789',
+        1,
+        '2027-12-31',
+        mockLogger,
+        {
+          correlationId: 'test-correlation-id',
+          accounts: { sbi: 'test-sbi', frn: 'test-frn', crn: undefined }
+        }
+      )
     })
 
     it('should handle PDF generation errors gracefully', async () => {

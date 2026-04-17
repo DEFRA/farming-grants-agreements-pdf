@@ -63,6 +63,11 @@ const buildAuditPayload = (event, context = {}, status = 'success') => ({
   audit: {
     eventtype: 'GrantsUploadAgreement',
     entities: eventEntities[event](context),
+    accounts: {
+      sbi: context.sbi,
+      frn: context.frn,
+      crn: context.crn
+    },
     status,
     details: context
   }

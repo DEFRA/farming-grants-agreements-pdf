@@ -191,6 +191,36 @@ describe('auditEvent', () => {
     }
   })
 
+  test('audit.accounts is always present', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+      agreementNumber: 'FPTT123456789'
+    })
+
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.audit.accounts).toBeDefined()
+    expect(typeof payload.audit.accounts).toBe('object')
+  })
+
+  test('audit.accounts is populated from known context fields', async () => {
+    const context = {
+      agreementNumber: 'FPTT123456789',
+      sbi: '123456789',
+      frn: '9876543210',
+      crn: 'crn-001'
+    }
+
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, context)
+
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.audit.accounts).toEqual({
+      sbi: '123456789',
+      frn: '9876543210',
+      crn: 'crn-001'
+    })
+  })
+
   test('passes failure status through to the published payload', async () => {
     await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {}, 'failure')
 
