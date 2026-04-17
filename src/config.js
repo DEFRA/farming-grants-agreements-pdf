@@ -190,6 +190,15 @@ const config = convict({
             default: 'io.onsite.agreement.status.updated',
             env: 'SNS_TOPIC_TYPE_AGREEMENT_STATUS_UPDATED'
           }
+        },
+        audit: {
+          arn: {
+            doc: 'AWS SNS Topic ARN for audit events',
+            format: String,
+            default:
+              'arn:aws:sns:eu-west-2:000000000000:fcp_audit_farming_grants_agreements_pdf',
+            env: 'SNS_TOPIC_ARN_AUDIT'
+          }
         }
       }
     },

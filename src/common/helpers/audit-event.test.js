@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
+const mockSnsClientSend = vi.hoisted(() => vi.fn())
+
 const mockConfigGet = vi.hoisted(() =>
   vi.fn((key) => {
     const configMap = {
       cdpEnvironment: 'test',
-      serviceName: 'farming-grants-agreements-pdf'
+      serviceName: 'farming-grants-agreements-pdf',
+      'aws.region': 'eu-west-2',
+      'aws.sns.endpoint': 'http://localhost:4566',
+      'aws.accessKeyId': 'test',
+      'aws.secretAccessKey': 'test',
+      'aws.sns.topic.audit.arn':
+        'arn:aws:sns:eu-west-2:000000000000:fcp_audit_farming_grants_agreements_pdf'
     }
     return configMap[key]
   })
@@ -12,12 +20,24 @@ const mockConfigGet = vi.hoisted(() =>
 
 vi.mock('#~/config.js', () => ({ config: { get: mockConfigGet } }))
 
+vi.mock('@aws-sdk/client-sns', () => ({
+  SNSClient: class MockSNSClient {
+    send(command) {
+      return mockSnsClientSend(command)
+    }
+  },
+  PublishCommand: class MockPublishCommand {
+    constructor(params) {
+      Object.assign(this, params)
+    }
+  }
+}))
+
 describe('AuditEvent', () => {
   let AuditEvent
 
   beforeEach(async () => {
     vi.resetModules()
-    vi.doMock('@defra/cdp-auditing', () => ({ audit: vi.fn() }))
     ;({ AuditEvent } = await import('./audit-event.js'))
   })
 
@@ -43,15 +63,13 @@ describe('AuditEvent', () => {
 })
 
 describe('auditEvent', () => {
-  let audit
   let auditEvent
   let AuditEvent
 
   beforeEach(async () => {
     vi.resetModules()
-    vi.doMock('@defra/cdp-auditing', () => ({ audit: vi.fn() }))
+    mockSnsClientSend.mockResolvedValue({})
     ;({ auditEvent, AuditEvent } = await import('./audit-event.js'))
-    ;({ audit } = await import('@defra/cdp-auditing'))
   })
 
   afterEach(() => {
@@ -59,49 +77,19 @@ describe('auditEvent', () => {
     vi.clearAllMocks()
   })
 
-  test('calls audit with correct top-level fields for upload', () => {
-    const context = {
-      agreementNumber: 'FPTT123456789',
-      version: '1',
-      key: 'base/FPTT123456789/1/FPTT123456789-1.pdf',
-      bucket: 'test-bucket',
-      location: 's3://test-bucket/base/FPTT123456789/1/FPTT123456789-1.pdf',
-      correlationId: 'corr-xyz'
-    }
-
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, context)
-
-    expect(audit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        correlationid: 'corr-xyz',
-        datetime: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
-        environment: 'test',
-        application: 'Grants',
-        component: 'farming-grants-agreements-pdf'
-      })
-    )
-  })
-
-  test('calls audit with correct security fields', () => {
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+  test('publishes to SNS with correct TopicArn', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
       agreementNumber: 'FPTT123456789'
     })
 
-    expect(audit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        security: expect.objectContaining({
-          pmccode: '0201',
-          details: expect.objectContaining({
-            transactioncode: '2307',
-            message: 'PDF document uploaded to S3',
-            additionalinfo: 'agreementNumber: FPTT123456789'
-          })
-        })
-      })
+    expect(mockSnsClientSend).toHaveBeenCalledOnce()
+    const [command] = mockSnsClientSend.mock.calls[0]
+    expect(command.TopicArn).toBe(
+      'arn:aws:sns:eu-west-2:000000000000:fcp_audit_farming_grants_agreements_pdf'
     )
   })
 
-  test('calls audit with correct audit fields for upload', () => {
+  test('publishes correct top-level fields for upload', async () => {
     const context = {
       agreementNumber: 'FPTT123456789',
       version: '1',
@@ -111,23 +99,64 @@ describe('auditEvent', () => {
       correlationId: 'corr-xyz'
     }
 
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, context)
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, context)
 
-    expect(audit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audit: expect.objectContaining({
-          eventtype: 'GrantsUploadAgreement',
-          action: 'created',
-          entity: 'agreement',
-          entityid: 'FPTT123456789',
-          status: 'success',
-          details: context
-        })
-      })
-    )
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+
+    expect(payload).toMatchObject({
+      correlationid: 'corr-xyz',
+      datetime: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      environment: 'test',
+      application: 'Grants',
+      component: 'farming-grants-agreements-pdf'
+    })
   })
 
-  test('audit.action for PDF_UPLOADED_TO_S3 is a valid action value', () => {
+  test('publishes correct security fields', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+      agreementNumber: 'FPTT123456789'
+    })
+
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+
+    expect(payload.security).toMatchObject({
+      pmccode: '0201',
+      details: {
+        transactioncode: '2307',
+        message: 'PDF document uploaded to S3',
+        additionalinfo: 'agreementNumber: FPTT123456789'
+      }
+    })
+  })
+
+  test('publishes correct audit fields for upload', async () => {
+    const context = {
+      agreementNumber: 'FPTT123456789',
+      version: '1',
+      key: 'base/FPTT123456789/1/FPTT123456789-1.pdf',
+      bucket: 'test-bucket',
+      location: 's3://test-bucket/base/FPTT123456789/1/FPTT123456789-1.pdf',
+      correlationId: 'corr-xyz'
+    }
+
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, context)
+
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+
+    expect(payload.audit).toMatchObject({
+      eventtype: 'GrantsUploadAgreement',
+      action: 'created',
+      entity: 'agreement',
+      entityid: 'FPTT123456789',
+      status: 'success',
+      details: context
+    })
+  })
+
+  test('audit.action for PDF_UPLOADED_TO_S3 is a valid action value', async () => {
     const validActions = [
       'created',
       'read',
@@ -139,41 +168,39 @@ describe('auditEvent', () => {
       'withdrawn'
     ]
 
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
       agreementNumber: 'FPTT123456789'
     })
 
-    const [[payload]] = audit.mock.calls
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
     expect(validActions).toContain(payload.audit.action)
   })
 
-  test('audit.entity is "agreement"', () => {
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+  test('audit.entity is "agreement"', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
       agreementNumber: 'FPTT123456789'
     })
 
-    const [[payload]] = audit.mock.calls
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
     expect(payload.audit.entity).toBe('agreement')
   })
 
-  test('passes failure status through to the audit payload', () => {
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {}, 'failure')
+  test('passes failure status through to the published payload', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {}, 'failure')
 
-    expect(audit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        audit: expect.objectContaining({ status: 'failure' })
-      })
-    )
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.audit.status).toBe('failure')
   })
 
-  test('handles empty context gracefully', () => {
-    auditEvent(AuditEvent.PDF_UPLOADED_TO_S3)
+  test('handles empty context gracefully', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3)
 
-    expect(audit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        correlationid: undefined,
-        audit: expect.objectContaining({ entityid: undefined })
-      })
-    )
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.correlationid).toBeUndefined()
+    expect(payload.audit.entityid).toBeUndefined()
   })
 })

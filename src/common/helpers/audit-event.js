@@ -1,4 +1,4 @@
-import { audit } from '@defra/cdp-auditing'
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns'
 import { config } from '#~/config.js'
 
 export const AuditEvent = Object.freeze({
@@ -19,6 +19,19 @@ const eventTransactionCodes = {
 const eventActions = {
   [AuditEvent.PDF_UPLOADED_TO_S3]: 'created'
 }
+
+const snsClient = new SNSClient(
+  process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test'
+    ? {
+        region: config.get('aws.region'),
+        endpoint: config.get('aws.sns.endpoint'),
+        credentials: {
+          accessKeyId: config.get('aws.accessKeyId'),
+          secretAccessKey: config.get('aws.secretAccessKey')
+        }
+      }
+    : {}
+)
 
 /**
  * Builds the full audit payload for a PDF S3 operation.
@@ -56,11 +69,16 @@ const buildAuditPayload = (event, context = {}, status = 'success') => ({
 })
 
 /**
- * Records a PDF S3 operation audit event.
+ * Records a PDF S3 operation audit event by publishing to SNS.
  * @param {AuditEvent[keyof AuditEvent]} event
  * @param {{ agreementNumber: string, version: string|number, key: string, bucket: string, location?: string, correlationId?: string }} context
  * @param {'success'|'failure'} [status]
  */
-export const auditEvent = (event, context = {}, status = 'success') => {
-  audit(buildAuditPayload(event, context, status))
+export const auditEvent = async (event, context = {}, status = 'success') => {
+  await snsClient.send(
+    new PublishCommand({
+      TopicArn: config.get('aws.sns.topic.audit.arn'),
+      Message: JSON.stringify(buildAuditPayload(event, context, status))
+    })
+  )
 }
