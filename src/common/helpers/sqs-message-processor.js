@@ -14,6 +14,11 @@ const generateAndUploadPdf = async (data, logger) => {
   const version = data.version
   const endDate = data.endDate
   const correlationId = data.correlationId
+  const accounts = {
+    sbi: data.sbi,
+    frn: data.frn,
+    crn: data.crn
+  }
 
   // version is currently hardcoded until the version is passed from the API service
   const filename = `${agreementNumber}-${version}.pdf`
@@ -41,7 +46,7 @@ const generateAndUploadPdf = async (data, logger) => {
     agreementNumber,
     version,
     endDate,
-    correlationId,
+    { correlationId, accounts },
     logger
   )
   return pdfPath
@@ -54,7 +59,7 @@ const generateAndUploadPdf = async (data, logger) => {
  * @param {string} agreementNumber - The agreement number
  * @param {number} version - The agreement version
  * @param {Date|string} endDate - The agreement end date
- * @param {string} correlationId - The correlation ID from the originating SQS message
+ * @param {{ correlationId: string, accounts: object }} options - Correlation ID and known account identifiers
  * @param {import('@hapi/hapi').Server} logger - The logger instance
  * @returns {Promise<void>}
  */
@@ -64,7 +69,7 @@ const uploadPdfToS3 = async (
   agreementNumber,
   version,
   endDate,
-  correlationId,
+  { correlationId, accounts },
   logger
 ) => {
   try {
@@ -75,7 +80,7 @@ const uploadPdfToS3 = async (
       version,
       endDate,
       logger,
-      correlationId
+      { correlationId, accounts }
     )
     logger.info(
       `Agreement ${agreementNumber} PDF uploaded successfully (${uploadResult.success}) to S3`

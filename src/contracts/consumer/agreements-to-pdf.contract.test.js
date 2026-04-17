@@ -125,7 +125,10 @@ describe('receive an agreement accepted event', () => {
             1,
             '2025-09-31',
             mockLogger,
-            'mockCorrelationId'
+            {
+              correlationId: 'mockCorrelationId',
+              accounts: { sbi: undefined, frn: undefined, crn: undefined }
+            }
           )
         })
       )

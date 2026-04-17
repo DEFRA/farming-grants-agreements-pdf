@@ -104,7 +104,7 @@ function calculateRetentionPeriod(endDate) {
  * @param {string} version Farming agreement document version
  * @param {Date|string} endDate Agreement end date
  * @param {Logger} logger Logger instance
- * @param {string} [correlationId] Correlation ID from the originating SQS message
+ * @param {{ correlationId?: string, accounts?: { sbi?: string, frn?: string, crn?: string } }} [options] Correlation ID and known account identifiers to include in the audit record
  * @returns {Promise<{success: boolean, bucket: *, key: *, etag: *, location: string}>}
  */
 export async function uploadPdf(
@@ -114,7 +114,7 @@ export async function uploadPdf(
   version,
   endDate,
   logger,
-  correlationId
+  { correlationId, accounts = {} } = {}
 ) {
   let uploadResult
 
@@ -131,7 +131,8 @@ export async function uploadPdf(
       key: uploadResult.key,
       bucket: uploadResult.bucket,
       location: uploadResult.location,
-      correlationId
+      correlationId,
+      ...accounts
     })
   } catch (err) {
     logger.error(err, `Error in PDF ${filename} generation and upload process`)
