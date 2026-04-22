@@ -18,6 +18,8 @@ const mockConfigGet = vi.hoisted(() =>
   })
 )
 
+const mockNetworkInterfaces = vi.hoisted(() => vi.fn())
+
 vi.mock('#~/config.js', () => ({ config: { get: mockConfigGet } }))
 
 vi.mock('@aws-sdk/client-sns', () => ({
@@ -31,6 +33,10 @@ vi.mock('@aws-sdk/client-sns', () => ({
       Object.assign(this, params)
     }
   }
+}))
+
+vi.mock('node:os', () => ({
+  networkInterfaces: mockNetworkInterfaces
 }))
 
 describe('AuditEvent', () => {
@@ -69,6 +75,9 @@ describe('auditEvent', () => {
   beforeEach(async () => {
     vi.resetModules()
     mockSnsClientSend.mockResolvedValue({})
+    mockNetworkInterfaces.mockReturnValue({
+      eth0: [{ address: '192.168.1.100', family: 'IPv4', internal: false }]
+    })
     ;({ auditEvent, AuditEvent } = await import('./audit-event.js'))
   })
 
@@ -221,6 +230,41 @@ describe('auditEvent', () => {
       frn: '9876543210',
       crn: 'crn-001'
     })
+  })
+
+  test('ip is populated from request.server.info.host when available', async () => {
+    const mockRequest = { server: { info: { host: '10.0.0.5' } } }
+    await auditEvent(
+      AuditEvent.PDF_UPLOADED_TO_S3,
+      { agreementNumber: 'FPTT123456789' },
+      'success',
+      mockRequest
+    )
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.ip).toBe('10.0.0.5')
+  })
+
+  test('ip falls back to os.networkInterfaces() when no request is available', async () => {
+    await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, {
+      agreementNumber: 'FPTT123456789'
+    })
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.ip).toBe('192.168.1.100')
+  })
+
+  test('ip falls back to os.networkInterfaces() when server host is 0.0.0.0', async () => {
+    const mockRequest = { server: { info: { host: '0.0.0.0' } } }
+    await auditEvent(
+      AuditEvent.PDF_UPLOADED_TO_S3,
+      { agreementNumber: 'FPTT123456789' },
+      'success',
+      mockRequest
+    )
+    const [command] = mockSnsClientSend.mock.calls[0]
+    const payload = JSON.parse(command.Message)
+    expect(payload.ip).toBe('192.168.1.100')
   })
 
   test('passes failure status through to the published payload', async () => {
