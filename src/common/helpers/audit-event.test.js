@@ -205,9 +205,11 @@ describe('auditEvent', () => {
   test('audit.accounts is populated from known context fields', async () => {
     const context = {
       agreementNumber: 'FPTT123456789',
-      sbi: '123456789',
-      frn: '9876543210',
-      crn: 'crn-001'
+      identifiers: {
+        sbi: '123456789',
+        frn: '9876543210',
+        crn: 'crn-001'
+      }
     }
 
     await auditEvent(AuditEvent.PDF_UPLOADED_TO_S3, context)
