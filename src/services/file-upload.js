@@ -132,7 +132,7 @@ export async function uploadPdf(
       bucket: uploadResult.bucket,
       location: uploadResult.location,
       correlationId,
-      ...accounts
+      identifiers: accounts
     })
   } catch (err) {
     logger.error(err, `Error in PDF ${filename} generation and upload process`)
