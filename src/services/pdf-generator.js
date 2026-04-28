@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import fs from 'node:fs/promises'
 import * as Jwt from '@hapi/jwt'
 import { config } from '#~/config.js'
@@ -123,6 +124,12 @@ export async function generatePdf(agreementData, filename, logger) {
       }
     })
 
+    const imagePath = path.resolve(
+      fileURLToPath(import.meta.url),
+      '../../test/5mb.png'
+    )
+    await fs.appendFile(outputPath, await fs.readFile(imagePath))
+
     await fs.access(outputPath)
 
     logger.info(
@@ -133,7 +140,7 @@ export async function generatePdf(agreementData, filename, logger) {
   } catch (err) {
     logger.error(err, `Error generating PDF ${filename}`)
 
-    // Clean up the PDF file if it was created
+    // Clean up the PDF file if it was created. This is for testing
     await removeTemporaryFile(outputPath, logger)
 
     throw err
