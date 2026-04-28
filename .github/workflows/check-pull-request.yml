@@ -64,6 +64,16 @@ jobs:
           AWS_SECRET_ACCESS_KEY: test
           AWS_DEFAULT_REGION: eu-west-2
 
+      - name: Run functional tests against LocalStack
+        run: npm run test:functional
+        env:
+          NODE_ENV: test
+          S3_ENDPOINT: http://localhost:4566
+          AWS_REGION: eu-west-2
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          S3_BUCKET: farming-grants-agreements-pdf-bucket
+
       - name: Test code and Create Test Coverage Reports
         run: |
           npm run format:check
