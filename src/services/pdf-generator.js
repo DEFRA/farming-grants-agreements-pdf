@@ -125,8 +125,9 @@ export async function generatePdf(agreementData, filename, logger) {
 
     await fs.access(outputPath)
 
+    const { size } = await fs.stat(outputPath)
     logger.info(
-      `PDF ${filename} generated successfully and saved to ${outputPath}`
+      `PDF ${filename} generated successfully and saved to ${outputPath} (${(size / (1024 * 1024)).toFixed(2)} MB)`
     )
 
     return outputPath

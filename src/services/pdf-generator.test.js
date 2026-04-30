@@ -17,6 +17,7 @@ const {
   mockBrowserCloseFn,
   mockFsAccessFn,
   mockFsMkdirFn,
+  mockFsStatFn,
   mockJwtTokenGenerateFn
 } = vi.hoisted(() => {
   const configMap = {
@@ -38,6 +39,7 @@ const {
     mockBrowserCloseFn: vi.fn(),
     mockFsAccessFn: vi.fn(),
     mockFsMkdirFn: vi.fn(),
+    mockFsStatFn: vi.fn().mockResolvedValue({ size: 1024 * 1024 }),
     mockJwtTokenGenerateFn: vi.fn()
   }
 })
@@ -62,7 +64,8 @@ vi.mock('node:fs/promises', async (importOriginal) => {
     default: {
       ...actual.default,
       access: mockFsAccessFn,
-      mkdir: mockFsMkdirFn
+      mkdir: mockFsMkdirFn,
+      stat: mockFsStatFn
     }
   }
 })
@@ -125,6 +128,7 @@ describe('PDF Generator Service', () => {
       .mockResolvedValueOnce(undefined) // Directory exists
       .mockResolvedValueOnce(undefined) // File exists after generation
     mockFsMkdirFn.mockResolvedValue(undefined)
+    mockFsStatFn.mockResolvedValue({ size: 1024 * 1024 })
 
     // Ensure config mock returns values
     mockConfigGetFn.mockImplementation((key) => {
