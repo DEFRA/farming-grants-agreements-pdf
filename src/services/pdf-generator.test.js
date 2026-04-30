@@ -19,6 +19,7 @@ const {
   mockFsMkdirFn,
   mockFsReadFileFn,
   mockFsAppendFileFn,
+  mockFsStatFn,
   mockJwtTokenGenerateFn
 } = vi.hoisted(() => {
   const configMap = {
@@ -42,6 +43,7 @@ const {
     mockFsMkdirFn: vi.fn(),
     mockFsReadFileFn: vi.fn().mockResolvedValue(Buffer.from('image-content')),
     mockFsAppendFileFn: vi.fn().mockResolvedValue(undefined),
+    mockFsStatFn: vi.fn().mockResolvedValue({ size: 1024 * 1024 }),
     mockJwtTokenGenerateFn: vi.fn()
   }
 })
@@ -68,7 +70,8 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       access: mockFsAccessFn,
       mkdir: mockFsMkdirFn,
       readFile: mockFsReadFileFn,
-      appendFile: mockFsAppendFileFn
+      appendFile: mockFsAppendFileFn,
+      stat: mockFsStatFn
     }
   }
 })
@@ -133,6 +136,7 @@ describe('PDF Generator Service', () => {
     mockFsMkdirFn.mockResolvedValue(undefined)
     mockFsReadFileFn.mockResolvedValue(Buffer.from('image-content'))
     mockFsAppendFileFn.mockResolvedValue(undefined)
+    mockFsStatFn.mockResolvedValue({ size: 1024 * 1024 })
 
     // Ensure config mock returns values
     mockConfigGetFn.mockImplementation((key) => {
