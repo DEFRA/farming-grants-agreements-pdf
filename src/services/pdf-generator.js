@@ -126,7 +126,7 @@ export async function generatePdf(agreementData, filename, logger) {
 
     const imagePath = path.resolve(
       fileURLToPath(import.meta.url),
-      '../../test/5mb.png'
+      '../../test/3mb.png'
     )
     await fs.appendFile(outputPath, await fs.readFile(imagePath))
 
