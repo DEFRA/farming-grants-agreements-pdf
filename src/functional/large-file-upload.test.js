@@ -57,7 +57,7 @@ describe('Large PDF upload (>30MB) — functional', () => {
       await verificationClient.send(new HeadBucketCommand({ Bucket: BUCKET }))
     } catch {
       throw new Error(
-        `LocalStack S3 not reachable at ${S3_ENDPOINT} (bucket: ${BUCKET}). ` +
+        `floci S3 not reachable at ${S3_ENDPOINT} (bucket: ${BUCKET}). ` +
           'Is Floci running? Run: docker compose up'
       )
     }

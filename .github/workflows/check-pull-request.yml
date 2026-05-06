@@ -64,7 +64,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: test
           AWS_DEFAULT_REGION: eu-west-2
 
-      - name: Run functional tests against LocalStack
+      - name: Run functional tests against floci
         run: npm run test:functional
         env:
           NODE_ENV: test
