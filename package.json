@@ -25,8 +25,9 @@
     "server:watch": "nodemon --exec tsx --enable-source-maps ./src",
     "setup:husky": "node -e \"try { (await import('husky')).default() } catch (e) { if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e }\" --input-type module",
     "start": "NODE_ENV=production node --use-strict .",
-    "test": "vitest run --exclude '**/contracts/**' --coverage --reporter=verbose",
-    "test:watch": "vitest --exclude '**/contracts/**'",
+    "test": "vitest run --exclude '**/contracts/**' --exclude '**/functional/**' --coverage --reporter=verbose",
+    "test:watch": "vitest --exclude '**/contracts/**' --exclude '**/functional/**'",
+    "test:functional": "vitest run --config vitest.functional.config.js",
     "test:contracts": "vitest run src/contracts",
     "test:contracts:consumer": "vitest run src/contracts/consumer",
     "test:contracts:provider": "echo 'No provider contract tests to run'"
