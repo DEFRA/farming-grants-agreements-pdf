@@ -71,7 +71,7 @@ const buildAuditPayload = (
 ) => ({
   correlationid: context.correlationId,
   datetime: new Date().toISOString(),
-  environment: config.get('cdpEnvironment'),
+  environment: `cdp-${config.get('cdpEnvironment')}`,
   version: '0.1.0',
   application: 'Grants',
   component: config.get('serviceName'),
