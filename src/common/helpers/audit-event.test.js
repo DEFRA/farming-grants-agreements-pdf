@@ -116,7 +116,7 @@ describe('auditEvent', () => {
     expect(payload).toMatchObject({
       correlationid: 'corr-xyz',
       datetime: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
-      environment: 'test',
+      environment: 'cdp-test',
       application: 'Grants',
       component: 'farming-grants-agreements-pdf'
     })
@@ -158,7 +158,7 @@ describe('auditEvent', () => {
     expect(payload.audit).toMatchObject({
       eventtype: 'GrantsUploadAgreement',
       entities: [
-        { entity: 'agreement', action: 'created', id: 'FPTT123456789' }
+        { entity: 'agreement', action: 'created', entityId: 'FPTT123456789' }
       ],
       status: 'success',
       details: context
@@ -281,6 +281,6 @@ describe('auditEvent', () => {
     const [command] = mockSnsClientSend.mock.calls[0]
     const payload = JSON.parse(command.Message)
     expect(payload.correlationid).toBeUndefined()
-    expect(payload.audit.entities[0].id).toBeUndefined()
+    expect(payload.audit.entities[0].entityId).toBeUndefined()
   })
 })

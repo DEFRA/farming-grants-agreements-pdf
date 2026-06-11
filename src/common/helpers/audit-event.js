@@ -16,10 +16,14 @@ const eventTransactionCodes = {
   [AuditEvent.PDF_UPLOADED_TO_S3]: '2307'
 }
 
-// Entities affected by each event — each entry is a function of context returning an array of { entity, action, id? }
+// Entities affected by each event — each entry is a function of context returning an array of { entity, action, entityId? }
 const eventEntities = {
   [AuditEvent.PDF_UPLOADED_TO_S3]: (context) => [
-    { entity: 'agreement', action: 'created', id: context.agreementNumber }
+    {
+      entity: 'agreement',
+      action: 'created',
+      entityId: context.agreementNumber
+    }
   ]
 }
 
@@ -67,7 +71,7 @@ const buildAuditPayload = (
 ) => ({
   correlationid: context.correlationId,
   datetime: new Date().toISOString(),
-  environment: config.get('cdpEnvironment'),
+  environment: `cdp-${config.get('cdpEnvironment')}`,
   version: '0.1.0',
   application: 'Grants',
   component: config.get('serviceName'),
