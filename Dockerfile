@@ -30,7 +30,7 @@ EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node .npmrc ./
-RUN npm install
+RUN npm ci
 COPY --chown=node:node ./src ./src
 
 # Skip Puppeteer download since we use system Chromium
