@@ -29,6 +29,7 @@ ENV PORT=${PORT}
 EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node package*.json ./
+COPY --chown=node:node .npmrc ./
 RUN npm install
 COPY --chown=node:node ./src ./src
 
@@ -69,6 +70,7 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV TMP_PDF_FOLDER=/var/tmp/defra-pdf
 
 COPY --from=development /home/node/package*.json ./
+COPY --from=development /home/node/.npmrc ./
 COPY --from=development /home/node/src ./src/
 
 RUN npm ci --omit=dev
