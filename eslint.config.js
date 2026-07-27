@@ -1,4 +1,5 @@
 import neostandard from 'neostandard'
+import importX from 'eslint-plugin-import-x'
 
 const config = neostandard({
   env: ['node', 'vitest'],
@@ -9,6 +10,9 @@ const config = neostandard({
 
 config.push({
   files: ['**/*.js'],
+  plugins: {
+    'import-x': importX
+  },
   rules: {
     'import-x/no-unused-modules': [
       'error',
@@ -22,6 +26,9 @@ config.push({
 
 config.push({
   files: ['**/*.test.{cjs,js}', '**/test-helpers/**'],
+  plugins: {
+    'import-x': importX
+  },
   rules: {
     'import-x/no-unused-modules': [
       'error',
