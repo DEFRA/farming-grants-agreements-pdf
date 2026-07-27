@@ -83,7 +83,7 @@
     "prettier": "3.5.3",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vitest": "4.0.16",
+    "vitest": "4.1.0",
     "vitest-fetch-mock": "0.4.5"
   }
 }
