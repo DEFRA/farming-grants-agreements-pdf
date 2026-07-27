@@ -57,7 +57,7 @@
     "https-proxy-agent": "7.0.6",
     "joi": "17.13.3",
     "mongo-locks": "3.1.2",
-    "mongodb": "6.17.0",
+    "mongodb": "7.5.0",
     "node-fetch": "3.3.2",
     "pino": "9.13.1",
     "pino-pretty": "13.0.0",
