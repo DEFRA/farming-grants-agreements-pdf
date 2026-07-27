@@ -231,9 +231,10 @@ describe('SQS Client', () => {
         MessageId: 'msg-12345'
       }
 
-      await messageHandler(validMessage)
+      const result = await messageHandler(validMessage)
 
       // Assert the specific logger call we want to test
+      expect(result).toEqual(validMessage)
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Successfully processed message: msg-12345'
       )

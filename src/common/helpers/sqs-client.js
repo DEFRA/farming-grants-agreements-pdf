@@ -40,6 +40,8 @@ export const sqsClientPlugin = {
           } catch (err) {
             server.logger.error(err, 'Failed to process message')
           }
+
+          return message
         },
         sqs: sqsClient,
         batchSize: config.get('aws.sqs.maxMessages'),
