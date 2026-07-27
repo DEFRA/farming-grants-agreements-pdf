@@ -1,6 +1,6 @@
 services:
   floci:
-    image: hectorvent/floci:1.1.0
+    image: hectorvent/floci:1.5.5
     container_name: farming-grants-agreements-pdf-floci
     ports:
       - '4568:4566' # Floci Gateway (PDF)
