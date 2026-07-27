@@ -13,24 +13,18 @@ updates:
           - '@aws-sdk/*'
           - 'aws*'
 
-      core:
-        patterns:
-          - '@defra/*'
-          - '@hapi/*'
-          - 'hapi*'
-          - 'joi'
-          - 'sqs-consumer'
-
-      build:
+      babel:
         patterns:
           - '@babel/*'
           - 'babel*'
-          - 'autoprefixer'
+
+      hapi:
+        patterns:
+          - '@hapi/*'
+          - 'hapi-*'
 
       lint:
         patterns:
-          - 'eslint'
-          - 'eslint-*'
           - 'neostandard'
           - 'prettier'
           - 'stylelint'
