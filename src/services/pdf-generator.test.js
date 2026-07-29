@@ -246,6 +246,28 @@ describe('PDF Generator Service', () => {
       )
     })
 
+    test('should include the event code as the grantCode JWT claim', async () => {
+      await generatePdf(
+        { ...agreementData, code: 'pigs-might-fly' },
+        filename,
+        mockLogger
+      )
+
+      expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
+        { source: 'entra', grantCode: 'pigs-might-fly' },
+        'test-secret'
+      )
+    })
+
+    test('should omit the grantCode JWT claim for an older event without a code', async () => {
+      await generatePdf(agreementData, filename, mockLogger)
+
+      expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
+        { source: 'entra' },
+        'test-secret'
+      )
+    })
+
     test('should create temporary directory if it does not exist', async () => {
       // Reset mock to override beforeEach setup
       mockFsAccessFn.mockReset()
