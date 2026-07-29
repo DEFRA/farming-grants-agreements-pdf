@@ -8,7 +8,7 @@ UPLOAD["File Upload Service<br>S3 Client"]
 end
 
 UI["Grants-UI Service<br>Web Interface"] -- User Accepts Agreement offer --> API["Farming Grants Agreement API"]
-API -- Publishes accepted agreement data<br>with optional code --> SNS["SNS Topic<br>agreement_accepted<br>arn:aws:sns:eu-west-2:000000000000:agreement_accepted"]
+API -- Publishes accepted agreement data<br>with optional code --> SNS["SNS Topic<br>agreement status updated"]
 SNS -- Forwards message --> SQS["SQS Queue<br>create_agreement_pdf_fifo.fifo<br>http://localhost:4566/000000000000/create_agreement_pdf_fifo.fifo"]
 SQS -- Polls for messages --> CONSUMER
 CONSUMER -- Processes message --> PROCESSOR
