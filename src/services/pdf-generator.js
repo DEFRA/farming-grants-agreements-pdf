@@ -77,7 +77,13 @@ export async function generatePdf(agreementData, filename, logger) {
 
     const source = 'entra'
     const jwtSecret = config.get('jwtSecret')
-    const encryptedAuth = Jwt.token.generate({ source }, jwtSecret)
+    const jwtClaims = {
+      source,
+      ...(agreementData.code !== undefined && {
+        grantCode: agreementData.code
+      })
+    }
+    const encryptedAuth = Jwt.token.generate(jwtClaims, jwtSecret)
 
     logger.info(`Navigating to agreement URL ${agreementData.agreementUrl}`)
 
