@@ -82,6 +82,5 @@ export const sqsClientPlugin = {
 }
 
 /**
- * @import { Agreement } from '#~/api/common/types/agreement.d.js'
  * @import { Message } from '@aws-sdk/client-sqs'
  */

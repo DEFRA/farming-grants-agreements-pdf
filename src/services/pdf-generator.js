@@ -97,17 +97,17 @@ export async function generatePdf(agreementData, filename, logger) {
 
     // Form submission code - runs in browser context
     const formSubmissionCode = () => {
-      const form = document.createElement('form')
+      const form = globalThis.document.createElement('form')
       form.method = 'GET'
       form.action = globalThis.location.href
 
-      const input = document.createElement('input')
+      const input = globalThis.document.createElement('input')
       input.type = 'hidden'
       input.name = 'action'
       input.value = 'view-agreement'
 
       form.appendChild(input)
-      document.body.appendChild(form)
+      globalThis.document.body.appendChild(form)
       form.submit()
     }
 
