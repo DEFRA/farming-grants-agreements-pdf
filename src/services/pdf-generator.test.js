@@ -502,7 +502,7 @@ describe('PDF Generator Service', () => {
       }
 
       const mockLocation = { href: 'https://example.com/agreement/123' }
-      const mockGlobalThis = { location: mockLocation }
+      const mockGlobalThis = { document: mockDocument, location: mockLocation }
 
       // Mock page.evaluate to execute the function with proper browser context
       // This ensures lines 88-99 are executed
@@ -511,14 +511,13 @@ describe('PDF Generator Service', () => {
         // We need to execute it with these available
         try {
           // Create a function that has access to our mocks
-          // eslint-disable-next-line no-new-func
           const wrappedFn = new Function(
             'document',
             'globalThis',
             `return (${fn.toString()})()`
           )
           return wrappedFn(mockDocument, mockGlobalThis)
-        } catch (err) {
+        } catch {
           // If execution fails, the function is still defined and will execute in browser
           // The important thing is that page.evaluate was called with the function
           return undefined

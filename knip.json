@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6.30.0/schema.json",
+  "ignoreDependencies": [
+    "@aws-sdk/credential-providers",
+    "husky",
+    "pino-pretty"
+  ]
+}
