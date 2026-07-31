@@ -13,11 +13,6 @@ updates:
           - '@aws-sdk/*'
           - 'aws*'
 
-      babel:
-        patterns:
-          - '@babel/*'
-          - 'babel*'
-
       hapi:
         patterns:
           - '@hapi/*'
@@ -25,7 +20,8 @@ updates:
 
       lint:
         patterns:
-          - 'neostandard'
+          - 'eslint'
+          - 'eslint-*'
           - 'prettier'
           - 'stylelint'
           - 'stylelint-*'
@@ -53,15 +49,12 @@ updates:
           - 'convict*'
           - 'husky'
           - 'nodemon'
-          - 'npm-run-all'
 
       types:
         patterns:
           - '@types/*'
 
     ignore:
-      - dependency-name: 'eslint-*'
-      - dependency-name: 'eslint'
       - dependency-name: "@types/node"
         versions: [">=25"] # Use Node LTS
 
