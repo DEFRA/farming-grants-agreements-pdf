@@ -8,12 +8,11 @@ UPLOAD["File Upload Service<br>S3 Client"]
 end
 
 UI["Grants-UI Service<br>Web Interface"] -- User Accepts Agreement offer --> API["Farming Grants Agreement API"]
-API -- Publishes accepted agreement data<br>with optional code --> SNS["SNS Topic<br>agreement status updated"]
+API -- Publishes message with<br>the agreement url --> SNS["SNS Topic<br>agreement_accepted<br>arn:aws:sns:eu-west-2:000000000000:agreement_accepted"]
 SNS -- Forwards message --> SQS["SQS Queue<br>create_agreement_pdf_fifo.fifo<br>http://localhost:4566/000000000000/create_agreement_pdf_fifo.fifo"]
 SQS -- Polls for messages --> CONSUMER
 CONSUMER -- Processes message --> PROCESSOR
-PROCESSOR -- Passes agreement data --> PDFGEN
-PDFGEN -- Requests print view with<br>x-encrypted-auth JWT<br>code mapped to grantCode when present --> UI
+PROCESSOR -- Extracts agreementUrl<br>and agreementNumber --> PDFGEN
 PDFGEN -- Generates PDF --> UPLOAD
 UPLOAD -- Uploads PDF to<br>agreements/ folder --> S3@{ label: "S3 Bucket<br>farming-grants-agreements-pdf-bucket<br>agreements/ folder<br><span style=\"padding-left:\">agreements/FPTT123456789-1.pdf</span>" }
 User -- Downloads the Offer Agreement document --> DOWNLOAD["GET /FPTT123456789/1/download"] --> API
