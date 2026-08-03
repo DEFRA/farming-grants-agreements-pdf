@@ -533,6 +533,7 @@ describe('PDF Generator Service', () => {
         // We need to execute it with these available
         try {
           // Create a function that has access to our mocks
+          // eslint-disable-next-line no-new-func
           const wrappedFn = new Function(
             'document',
             'globalThis',
