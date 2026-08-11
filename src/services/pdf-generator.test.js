@@ -246,20 +246,24 @@ describe('PDF Generator Service', () => {
       )
     })
 
-    test('should include the event code as the grantCode JWT claim', async () => {
+    test('should include the event routing values as JWT claims', async () => {
       await generatePdf(
-        { ...agreementData, code: 'pigs-might-fly' },
+        { ...agreementData, code: 'pigs-might-fly', sbi: '123456789' },
         filename,
         mockLogger
       )
 
       expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
-        { source: 'entra', grantCode: 'pigs-might-fly' },
+        {
+          source: 'entra',
+          grantCode: 'pigs-might-fly',
+          sbi: '123456789'
+        },
         'test-secret'
       )
     })
 
-    test('should omit the grantCode JWT claim for an older event without a code', async () => {
+    test('should omit routing claims for an older event without them', async () => {
       await generatePdf(agreementData, filename, mockLogger)
 
       expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
