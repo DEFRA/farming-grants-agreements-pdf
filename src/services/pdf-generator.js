@@ -50,9 +50,19 @@ async function ensureSecureTmpDir(tmpFolder, logger) {
   }
 }
 
+const createAuthenticationToken = ({ code, sbi }) => {
+  const claims = {
+    source: 'entra',
+    ...(code !== undefined && { grantCode: code }),
+    ...(sbi !== undefined && { sbi })
+  }
+
+  return Jwt.token.generate(claims, config.get('jwtSecret'))
+}
+
 /**
  *
- * @param {string} agreementData The agreement data necessary to generate the PDF
+ * @param {{ agreementUrl: string, code?: string, sbi?: string }} agreementData - Agreement data from an accepted-status event
  * @param {string} filename The filename to store the generated PDF
  * @param logger The logger instance
  * @returns {Promise<string>} output path of the file
@@ -75,9 +85,7 @@ export async function generatePdf(agreementData, filename, logger) {
       deviceScaleFactor: 1
     })
 
-    const source = 'entra'
-    const jwtSecret = config.get('jwtSecret')
-    const encryptedAuth = Jwt.token.generate({ source }, jwtSecret)
+    const encryptedAuth = createAuthenticationToken(agreementData)
 
     logger.info(`Navigating to agreement URL ${agreementData.agreementUrl}`)
 
