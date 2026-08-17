@@ -502,7 +502,6 @@ describe('PDF Generator Service', () => {
         return configMap[key]
       })
 
-      // Create mock browser environment with all required globals
       const mockForm = {
         method: '',
         action: '',
@@ -528,41 +527,40 @@ describe('PDF Generator Service', () => {
       }
 
       const mockLocation = { href: 'https://example.com/agreement/123' }
-      const mockGlobalThis = { document: mockDocument, location: mockLocation }
+      const savedGlobalThis = globalThis
 
-      // Mock page.evaluate to execute the function with proper browser context
-      // This ensures lines 88-99 are executed
+      // Mock page.evaluate to execute the callback with browser-like globals
       mockPageEvaluateFn.mockImplementation((fn) => {
-        // The function expects document and globalThis to be in scope
-        // We need to execute it with these available
+        // Temporarily patch globalThis so the formSubmissionCode can access
+        // globalThis.document and globalThis.location
+        // eslint-disable-next-line no-global-assign
+        globalThis = Object.create(savedGlobalThis, {
+          document: { value: mockDocument },
+          location: { value: mockLocation }
+        })
         try {
-          // Create a function that has access to our mocks
-          // eslint-disable-next-line no-new-func
-          const wrappedFn = new Function(
-            'document',
-            'globalThis',
-            `return (${fn.toString()})()`
-          )
-          return wrappedFn(mockDocument, mockGlobalThis)
-        } catch {
-          // If execution fails, the function is still defined and will execute in browser
-          // The important thing is that page.evaluate was called with the function
-          return undefined
+          return fn()
+        } finally {
+          // eslint-disable-next-line no-global-assign
+          globalThis = savedGlobalThis
         }
       })
 
       await generatePdf(agreementData, filename, mockLogger)
 
-      // Verify the form submission code was passed to page.evaluate (covers lines 88-99)
       expect(mockPageEvaluateFn).toHaveBeenCalled()
-      const evaluateFn = mockPageEvaluateFn.mock.calls[0][0]
-      expect(typeof evaluateFn).toBe('function')
 
-      // Verify the function contains the expected code
-      const funcCode = evaluateFn.toString()
-      expect(funcCode).toContain('createElement')
-      expect(funcCode).toContain('form')
-      expect(funcCode).toContain('view-agreement')
+      // Verify the form was created correctly
+      expect(mockDocument.createElement).toHaveBeenCalledWith('form')
+      expect(mockDocument.createElement).toHaveBeenCalledWith('input')
+      expect(mockForm.method).toBe('GET')
+      expect(mockForm.action).toBe('https://example.com/agreement/123')
+      expect(mockInput.type).toBe('hidden')
+      expect(mockInput.name).toBe('action')
+      expect(mockInput.value).toBe('view-agreement')
+      expect(mockForm.appendChild).toHaveBeenCalledWith(mockInput)
+      expect(mockDocument.body.appendChild).toHaveBeenCalledWith(mockForm)
+      expect(mockForm.submit).toHaveBeenCalled()
     })
 
     test('should log when browser is connected', async () => {
