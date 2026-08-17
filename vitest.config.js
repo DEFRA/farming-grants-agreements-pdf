@@ -3,7 +3,10 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   resolve: {
     // Mirror Node ESM: import file extensions must be fully specified (e.g. "x.js")
-    extensions: []
+    extensions: [],
+    alias: {
+      '~': new URL('.', import.meta.url).pathname
+    }
   },
   test: {
     globals: true,
