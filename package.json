@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
-    "@pact-foundation/pact": "17.1.1",
+    "@pact-foundation/pact": "17.1.2",
     "@vitest/coverage-v8": "4.1.10",
     "eslint": "9.39.5",
     "husky": "9.1.7",
