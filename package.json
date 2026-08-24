@@ -60,7 +60,7 @@
     "undici": "8.10.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.2.1",
+    "@commitlint/cli": "21.2.2",
     "@pact-foundation/pact": "17.1.2",
     "@vitest/coverage-v8": "4.1.10",
     "eslint": "9.39.5",
