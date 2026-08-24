@@ -193,8 +193,14 @@ describe('PDF Generator Service', () => {
         deviceScaleFactor: 1
       })
       expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
-        { source: 'entra' },
-        expect.any(String)
+        {
+          source: 'entra',
+          iss: 'agreements-pdf',
+          aud: ['agreements-ui', 'gas'],
+          sub: 'agreements-pdf'
+        },
+        expect.any(String),
+        { ttlSec: 300 }
       )
       expect(mockPageGotoFn).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
@@ -256,10 +262,14 @@ describe('PDF Generator Service', () => {
       expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
         {
           source: 'entra',
+          iss: 'agreements-pdf',
+          aud: ['agreements-ui', 'gas'],
+          sub: 'agreements-pdf',
           grantCode: 'pigs-might-fly',
           sbi: '123456789'
         },
-        'test-secret'
+        'test-secret',
+        { ttlSec: 300 }
       )
     })
 
@@ -267,8 +277,14 @@ describe('PDF Generator Service', () => {
       await generatePdf(agreementData, filename, mockLogger)
 
       expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
-        { source: 'entra' },
-        'test-secret'
+        {
+          source: 'entra',
+          iss: 'agreements-pdf',
+          aud: ['agreements-ui', 'gas'],
+          sub: 'agreements-pdf'
+        },
+        'test-secret',
+        { ttlSec: 300 }
       )
     })
 
