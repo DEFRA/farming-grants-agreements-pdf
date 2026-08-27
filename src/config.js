@@ -75,6 +75,12 @@ const config = convict({
     default: 'a-string-secret-at-least-256-bits-long',
     env: 'AGREEMENTS_JWT_SECRET'
   },
+  jwtKid: {
+    doc: 'Key id (kid) stamped in the caller JWT header so consumers can select the verifying key during rotation',
+    format: String,
+    default: 'agreements-hs256-1',
+    env: 'AGREEMENTS_JWT_KID'
+  },
   tmpPdfFolder: {
     doc: 'Temporary folder for PDF generation. In production, set TMP_PDF_FOLDER to a secure location with restricted permissions (e.g., /var/tmp/defra-pdf with mode 0700)',
     format: String,
