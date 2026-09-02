@@ -22,7 +22,8 @@ const {
 } = vi.hoisted(() => {
   const configMap = {
     tmpPdfFolder: '/tmp/pdfs',
-    jwtSecret: 'test-secret'
+    jwtSecret: 'test-secret',
+    jwtKid: 'agreements-hs256-1'
   }
   return {
     mockConfigGetFn: vi.fn((key) => configMap[key]),
@@ -134,7 +135,8 @@ describe('PDF Generator Service', () => {
     mockConfigGetFn.mockImplementation((key) => {
       const configMap = {
         tmpPdfFolder: '/tmp/pdfs',
-        jwtSecret: 'test-secret'
+        jwtSecret: 'test-secret',
+        jwtKid: 'agreements-hs256-1'
       }
       return configMap[key]
     })
@@ -164,7 +166,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -200,7 +203,7 @@ describe('PDF Generator Service', () => {
           sub: 'agreements-pdf'
         },
         expect.any(String),
-        { ttlSec: 300 }
+        { ttlSec: 300, header: { kid: 'agreements-hs256-1' } }
       )
       expect(mockPageGotoFn).toHaveBeenCalledWith(agreementData.agreementUrl, {
         waitUntil: 'domcontentloaded'
@@ -269,7 +272,7 @@ describe('PDF Generator Service', () => {
           sbi: '123456789'
         },
         'test-secret',
-        { ttlSec: 300 }
+        { ttlSec: 300, header: { kid: 'agreements-hs256-1' } }
       )
     })
 
@@ -284,6 +287,37 @@ describe('PDF Generator Service', () => {
           sub: 'agreements-pdf'
         },
         'test-secret',
+        { ttlSec: 300, header: { kid: 'agreements-hs256-1' } }
+      )
+    })
+
+    test('should stamp the configured kid in the JWT header', async () => {
+      await generatePdf(agreementData, filename, mockLogger)
+
+      expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(String),
+        expect.objectContaining({
+          header: { kid: 'agreements-hs256-1' }
+        })
+      )
+    })
+
+    test('should omit the header when no kid is configured', async () => {
+      mockConfigGetFn.mockImplementation((key) => {
+        const configMap = {
+          tmpPdfFolder: '/tmp/pdfs',
+          jwtSecret: 'test-secret',
+          jwtKid: ''
+        }
+        return configMap[key]
+      })
+
+      await generatePdf(agreementData, filename, mockLogger)
+
+      expect(mockJwtTokenGenerateFn).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.any(String),
         { ttlSec: 300 }
       )
     })
@@ -300,7 +334,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -327,7 +362,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -353,7 +389,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -378,7 +415,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -404,7 +442,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -465,7 +504,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -488,7 +528,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
@@ -513,7 +554,8 @@ describe('PDF Generator Service', () => {
       mockConfigGetFn.mockImplementation((key) => {
         const configMap = {
           tmpPdfFolder: '/tmp/pdfs',
-          jwtSecret: 'test-secret'
+          jwtSecret: 'test-secret',
+          jwtKid: 'agreements-hs256-1'
         }
         return configMap[key]
       })
