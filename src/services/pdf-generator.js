@@ -65,7 +65,13 @@ const createAuthenticationToken = ({ code, sbi }) => {
     ...(sbi !== undefined && { sbi })
   }
 
-  return Jwt.token.generate(claims, config.get('jwtSecret'), { ttlSec: 300 })
+  // FGP-1307: stamp a `kid` in the JWT header so consumers can select the
+  // verifying secret from their keyring and support key rotation via overlap.
+  const kid = config.get('jwtKid')
+  return Jwt.token.generate(claims, config.get('jwtSecret'), {
+    ttlSec: 300,
+    ...(kid ? { header: { kid } } : {})
+  })
 }
 
 /**
