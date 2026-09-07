@@ -51,13 +51,27 @@ async function ensureSecureTmpDir(tmpFolder, logger) {
 }
 
 const createAuthenticationToken = ({ code, sbi }) => {
+  // FGP-1307: caller-token hardening. Add registered claims (issuer, audience,
+  // subject and a 5-minute expiry) so Agreements UI and GAS can verify the
+  // token. Additive - consumers validate these in a backwards-compatible
+  // ("warn-only") mode until enforcement lands. Interim: one token is accepted
+  // by both Agreements UI and GAS (replaced by token exchange later).
   const claims = {
     source: 'entra',
+    iss: 'agreements-pdf',
+    aud: ['agreements-ui', 'gas'],
+    sub: 'agreements-pdf',
     ...(code !== undefined && { grantCode: code }),
     ...(sbi !== undefined && { sbi })
   }
 
-  return Jwt.token.generate(claims, config.get('jwtSecret'))
+  // FGP-1307: stamp a `kid` in the JWT header so consumers can select the
+  // verifying secret from their keyring and support key rotation via overlap.
+  const kid = config.get('jwtKid')
+  return Jwt.token.generate(claims, config.get('jwtSecret'), {
+    ttlSec: 300,
+    ...(kid ? { header: { kid } } : {})
+  })
 }
 
 /**
