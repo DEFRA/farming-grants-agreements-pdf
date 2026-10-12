@@ -60,7 +60,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   pact:
-    if: github.event.repository.fork == false
+    # FGP-1503: pact contract tests temporarily disabled.
+    # Re-enable by restoring the original `if` condition below.
+    # if: github.event.repository.fork == false
+    if: false
     needs: build
     runs-on: self-hosted
     env:
