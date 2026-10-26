@@ -65,7 +65,7 @@
     "@vitest/coverage-v8": "5.0.3",
     "eslint": "9.39.5",
     "husky": "9.1.7",
-    "knip": "6.41.0",
+    "knip": "6.42.0",
     "neostandard": "0.14.0",
     "nodemon": "3.1.14",
     "prettier": "3.9.10",
