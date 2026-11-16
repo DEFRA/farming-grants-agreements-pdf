@@ -62,7 +62,7 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.4",
     "@pact-foundation/pact": "17.1.4",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/coverage-v8": "5.1.0",
     "eslint": "9.39.5",
     "husky": "9.1.7",
     "knip": "6.44.1",
@@ -71,7 +71,7 @@
     "prettier": "3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   },
   "overrides": {
     "hapi-pulse": {
